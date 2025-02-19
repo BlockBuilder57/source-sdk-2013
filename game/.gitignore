@@ -1,0 +1,14 @@
+# game specific gitignores
+
+# executables
+*.exe
+bin/
+mod_*/bin/
+
+# configuration
+steam_appid.txt
+mod_tf/tf2_playerstats.dmx
+
+# multiplayer
+mod_*/download*
+mod_tf/voice_ban.dt
