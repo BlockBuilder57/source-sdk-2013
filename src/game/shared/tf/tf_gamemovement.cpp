@@ -1159,6 +1159,12 @@ void CTFGameMovement::ToggleParachute()
 	}
 }
 
+
+ConVar tf_player_movement_pogo_jumps( "tf_player_movement_pogo_jumps", "0", FCVAR_ARCHIVE | FCVAR_REPLICATED, "Enables pogo jumps, or the ability to hold the jump button to keep jumping." );
+ConVar tf_player_movement_jump_while_crouched( "tf_player_movement_jump_while_crouched", "0", FCVAR_ARCHIVE | FCVAR_REPLICATED, "Allows the ability to jump while crouched." );
+ConVar tf_player_movement_ahop( "tf_player_movement_ahop", "0", FCVAR_CHEAT | FCVAR_ARCHIVE | FCVAR_REPLICATED, "Enables/introduces accelerated hopping (AHOP) from HL2." );
+ConVar tf_player_movement_bhop( "tf_player_movement_bhop", "0", FCVAR_CHEAT | FCVAR_ARCHIVE | FCVAR_REPLICATED, "Disables the speed limit on bunny hopping (BHOP)." );
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -1223,7 +1229,7 @@ bool CTFGameMovement::CheckJumpButton()
 	ToggleParachute();
 
 	// Cannot jump will ducked.
-	if ( player->GetFlags() & FL_DUCKING )
+	if ( !tf_player_movement_jump_while_crouched.GetBool() && player->GetFlags() & FL_DUCKING )
 	{
 		// Let a scout do it.
 		bool bAllow = ( bScout && !bOnGround );
@@ -1237,14 +1243,14 @@ bool CTFGameMovement::CheckJumpButton()
 		return false;
 
 	// Cannot jump again until the jump button has been released.
-	if ( mv->m_nOldButtons & IN_JUMP )
+	if ( !tf_player_movement_pogo_jumps.GetBool() && !m_pTFPlayer->m_Shared.IsAirDashing() && mv->m_nOldButtons & IN_JUMP )
 		return false;
 
 	// In air, so ignore jumps 
 	// (unless you are a scout or ghost or parachute
 	if ( !bOnGround )
 	{
-		if ( m_pTFPlayer->CanAirDash() )
+		if ( m_pTFPlayer->CanAirDash() && !(mv->m_nOldButtons & IN_JUMP) )
 		{
 			bAirDash = true;
 		}
@@ -1264,7 +1270,8 @@ bool CTFGameMovement::CheckJumpButton()
 		return true;
 	}
 
-	PreventBunnyJumping();
+	if ( !tf_player_movement_bhop.GetBool() )
+		PreventBunnyJumping();
 
 	// Start jump animation and player sound (specific TF animation and flags).
 	m_pTFPlayer->DoAnimationEvent( PLAYERANIMEVENT_JUMP );
@@ -1339,8 +1346,61 @@ bool CTFGameMovement::CheckJumpButton()
 		mv->m_vecVelocity[2] += flMul;  // 2 * gravity * jump_height * ground_factor
 	}
 
+	if ( tf_player_movement_ahop.GetBool() )
+	{
+		//CHLMoveData *pMoveData = ( CHLMoveData* )mv;
+		Vector vecForward;
+		AngleVectors( mv->m_vecViewAngles, &vecForward );
+		vecForward.z = 0;
+		VectorNormalize( vecForward );
+		
+		// We give a certain percentage of the current forward movement as a bonus to the jump speed.  That bonus is clipped
+		// to not accumulate over time.
+		float flSpeedBoostPerc = ( !player->m_Local.m_bDucked ) ? 0.5f : 0.1f;
+		float flSpeedAddition = fabs( mv->m_flForwardMove * flSpeedBoostPerc );
+		float flMaxSpeed = mv->m_flMaxSpeed + ( mv->m_flMaxSpeed * flSpeedBoostPerc );
+		float flNewSpeed = ( flSpeedAddition + mv->m_vecVelocity.Length2D() );
+
+		//DevMsg("flSpeedAddition = fabs(%.2f * %.2f) = %.2f\n", mv->m_flForwardMove, flSpeedBoostPerc, flSpeedAddition);
+
+		// If we're over the maximum, we want to only boost as much as will get us to the goal speed
+		// this causes ahop in general
+		if ( flNewSpeed > flMaxSpeed )
+		{
+			flSpeedAddition -= flNewSpeed - flMaxSpeed;
+			//DevMsg("going too fast, %.2f (flNewSpeed) > %.2f (flMaxSpeed), subtracting speed by %.2f\n", flNewSpeed, flMaxSpeed, flNewSpeed - flMaxSpeed);
+		}
+
+		// this causes AFH/ASH
+		if ( mv->m_flForwardMove < 0.0f )
+			flSpeedAddition *= -1.0f;
+
+		Vector vecVelCurrent = mv->m_vecVelocity;
+		vecVelCurrent.z = 0;
+		VectorNormalize(vecVelCurrent);
+
+		// if DotProduct(vecForward, vecVelCurrent) < 0.0f or mv->m_flForwardMove < 0.0f we're in the position to ahop from the negative vector
+		// otherwise, we're in a position to have our velocity "clamped" to a normal jump velocity
+		// we can just disable that for bhop! :)
+
+		// Add it on
+		if (DotProduct(vecForward, vecVelCurrent) < 0.0f || mv->m_flForwardMove < 0.0f)
+		{
+			//DevMsg("we're ahopping I think\n");
+			VectorAdd( (vecForward*flSpeedAddition), mv->m_vecVelocity, mv->m_vecVelocity );
+		}
+
+		//DevMsg("we have vector dot of %.2f\n", DotProduct(vecVelCurrent, vecVelPost));
+		//DevMsg("we have angles dot of %.2f\n", DotProduct(vecForward, vecVelCurrent));
+	}
+
+	//DevMsg("flStartZ: %f\n", flStartZ);
+	//DevMsg("frametime: %f\n", gpGlobals->frametime);
+
+	//DevMsg("mulBefore: %f\n", mv->m_vecVelocity[2]);
 	// Apply gravity.
 	FinishGravity();
+	//DevMsg("mulAFter: %f\n\n", mv->m_vecVelocity[2]);
 
 	// Save the output data for the physics system to react to if need be.
 	mv->m_outJumpVel.z += mv->m_vecVelocity[2] - flStartZ;
