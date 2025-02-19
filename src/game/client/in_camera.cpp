@@ -123,9 +123,20 @@ CAM_ToOrthographic
 
 ==============================
 */
-void CAM_ToOrthographic(void) 
+void CAM_ToOrthographic( void ) 
 { 
 	input->CAM_ToOrthographic();
+}
+
+/*
+==============================
+CAM_ToPerspective
+
+==============================
+*/
+void CAM_ToPerspective( void ) 
+{  
+	input->CAM_ToPerspective();
 }
 
 /*
@@ -712,7 +723,7 @@ void CInput::CAM_ToFirstPerson(void)
 
 /*
 ==============================
-CAM_ToFirstPerson
+CAM_IsOrthographic
 
 ==============================
 */
@@ -724,7 +735,7 @@ bool CInput::CAM_IsOrthographic(void) const
 
 /*
 ==============================
-CAM_ToFirstPerson
+CAM_OrthographicSize
 
 ==============================
 */
@@ -736,7 +747,7 @@ void CInput::CAM_OrthographicSize(float& w, float& h) const
 
 /*
 ==============================
-CAM_ToFirstPerson
+CAM_ToOrthographic
 
 ==============================
 */
@@ -745,6 +756,19 @@ void CInput::CAM_ToOrthographic(void)
 	m_fCameraInThirdPerson = false;
 	m_CameraIsOrthographic = true;
 	cam_command.SetValue( 0 );
+}
+
+/*
+==============================
+CAM_ToPerspective
+
+==============================
+*/
+void CInput::CAM_ToPerspective(void)
+{
+	m_fCameraInThirdPerson = false;
+	m_CameraIsOrthographic = false;
+	cam_command.SetValue(0);
 }
 
 /*
@@ -916,6 +940,7 @@ static ConCommand thirdperson( "thirdperson", ::CAM_ToThirdPerson, "Switch to th
 static ConCommand firstperson( "firstperson", ::CAM_ToFirstPerson, "Switch to firstperson camera." );
 #endif
 static ConCommand camortho( "camortho", ::CAM_ToOrthographic, "Switch to orthographic camera.", FCVAR_CHEAT );
+static ConCommand campersp( "campersp", ::CAM_ToPerspective, "Switch to perspective camera.", FCVAR_CHEAT );
 static ConCommand startcammousemove( "+cammousemove",::CAM_StartMouseMove);
 static ConCommand endcammousemove( "-cammousemove",::CAM_EndMouseMove);
 static ConCommand startcamdistance( "+camdistance", ::CAM_StartDistance );

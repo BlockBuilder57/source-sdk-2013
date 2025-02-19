@@ -94,6 +94,7 @@ public:
 
 	// orthographic camera info	( TODO/FIXME:  Move this to a separate interface? )
 	virtual void		CAM_ToOrthographic() = 0;
+	virtual void		CAM_ToPerspective() = 0;
 	virtual	bool		CAM_IsOrthographic() const = 0;
 	virtual	void		CAM_OrthographicSize( float& w, float& h ) const = 0;
 

@@ -97,6 +97,7 @@ public:
 
 	// orthographic camera info
 	virtual		void		CAM_ToOrthographic();
+	virtual		void		CAM_ToPerspective();
 	virtual		bool		CAM_IsOrthographic() const;
 	virtual		void		CAM_OrthographicSize( float& w, float& h ) const;
 
