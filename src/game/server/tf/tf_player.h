@@ -946,7 +946,8 @@ public:
 	float				m_flBlastJumpLandTime;
 	bool				m_bTakenBlastDamageSinceLastMovement;
 
-	void				SetTargetDummy( void ){ m_bIsTargetDummy = true; }
+	bool				GetTargetDummy( void ){ return m_bIsTargetDummy; }
+	void				SetTargetDummy( bool bIsTargetDummy ){ m_bIsTargetDummy = bIsTargetDummy; }
 
 	bool				ShouldCollideWithSentry( void ){ return m_bCollideWithSentry; }
 	bool				IsAnyEnemySentryAbleToAttackMe( void ) const;		// return true if any enemy sentry has LOS and is facing me and is in range to attack

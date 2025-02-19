@@ -1251,6 +1251,28 @@ void CC_God_f (void)
 
 static ConCommand god("god", CC_God_f, "Toggle. Player becomes invulnerable.", FCVAR_CHEAT );
 
+#ifdef TF_DLL
+//------------------------------------------------------------------------------
+// Sets client as a targetdummy
+//------------------------------------------------------------------------------
+void CC_TargetDummy_f (void)
+{
+	if ( !sv_cheats->GetBool() )
+		return;
+
+	CTFPlayer *pTFPlayer = ToTFPlayer( UTIL_GetCommandClient() ); 
+	if ( !pTFPlayer )
+		return;
+
+	pTFPlayer->SetTargetDummy( !pTFPlayer->GetTargetDummy() );
+	if ( !pTFPlayer->GetTargetDummy() )
+		ClientPrint( pTFPlayer, HUD_PRINTCONSOLE, "targetdummy OFF\n" );
+	else
+		ClientPrint( pTFPlayer, HUD_PRINTCONSOLE, "targetdummy ON\n" );
+}
+
+static ConCommand targetdummy("targetdummy", CC_TargetDummy_f, "Toggle. Player becomes a targetdummy.", FCVAR_CHEAT );
+#endif
 
 //------------------------------------------------------------------------------
 // Sets client to godmode

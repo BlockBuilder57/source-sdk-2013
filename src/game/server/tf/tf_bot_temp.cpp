@@ -355,7 +355,7 @@ CBasePlayer *BotPutInServer( bool bTargetDummy, bool bFrozen, int iTeam, int iCl
 
 	if ( bTargetDummy )
 	{
-		pPlayer->SetTargetDummy();
+		pPlayer->SetTargetDummy( true );
 	}
 
 	BotNumber++;

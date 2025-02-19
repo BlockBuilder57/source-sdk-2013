@@ -10251,6 +10251,7 @@ void CTFPlayer::CommitSuicide( bool bExplode /* = false */, bool bForce /*= fals
 // Output : int
 //-----------------------------------------------------------------------------
 ConVar tf_preround_push_from_damage_enable( "tf_preround_push_from_damage_enable", "0", FCVAR_NONE, "If enabled, this will allow players using certain type of damage to move during pre-round freeze time." );
+ConVar tf_targetdummy_push_from_damage_enable("tf_targetdummy_push_from_damage_enable", "1", FCVAR_NONE, "If enabled, targetdummies can be pushed by damage. Mode 2 makes this exclusive to self damage.");
 void CTFPlayer::ApplyPushFromDamage( const CTakeDamageInfo &info, Vector vecDir )
 {
 	// check if player can be moved
@@ -10258,7 +10259,14 @@ void CTFPlayer::ApplyPushFromDamage( const CTakeDamageInfo &info, Vector vecDir 
 		return;
 
 	if ( m_bIsTargetDummy )
-		return;
+	{
+		// return if damage was not from self
+		if ( tf_targetdummy_push_from_damage_enable.GetInt() == 2 && info.GetAttacker() != this )
+			return;
+		// return if damage not enabled
+		else if ( !tf_targetdummy_push_from_damage_enable.GetBool() )
+			return;
+	}
 
 	Vector vecForce;
 	vecForce.Init();
@@ -12945,6 +12953,13 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 
 	// make sure to remove custom attributes
 	RemoveAllCustomAttributes();
+
+	// enable instant respawns
+	if (mp_respawnwavetime.GetInt() < 0)
+	{
+		m_bAllowInstantSpawn = true;
+		ForceRespawn();
+	}
 }
 
 struct SkillRatingAttackRecord_t
