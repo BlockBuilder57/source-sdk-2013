@@ -41,6 +41,8 @@ ConVar cl_hud_playerclass_use_playermodel( "cl_hud_playerclass_use_playermodel",
 
 ConVar cl_hud_playerclass_playermodel_showed_confirm_dialog( "cl_hud_playerclass_playermodel_showed_confirm_dialog", "0", FCVAR_ARCHIVE | FCVAR_HIDDEN );
 
+ConVar cl_hud_max_health_behaviour("cl_hud_max_health_behaviour", "1", FCVAR_ARCHIVE, "Determines the behaviour of the max health display.\n0 - Hide, 1 - Show when health is 5 or more less than max, 2 - Show when health is not max health, 3 - Show always");
+
 extern ConVar tf_max_health_boost;
 
 
@@ -307,7 +309,20 @@ void CTFHudPlayerClass::OnThink()
 		// Don't show if we're disguised (the panels overlap)
 		bool bShowCarryingWeaponPanel = m_nDisguiseClass == TF_CLASS_UNDEFINED;
 
-		if ( pPlayer->GetActiveTFWeapon() && pPlayer->GetActiveTFWeapon()->GetAttributeContainer() )
+		// don't show the weapon panel if we have the PD flag
+		if (CTFPlayerDestructionLogic::GetRobotDestructionLogic() && (CTFPlayerDestructionLogic::GetRobotDestructionLogic()->GetType() == CTFPlayerDestructionLogic::TYPE_PLAYER_DESTRUCTION))
+		{
+			if (pPlayer->HasTheFlag())
+			{
+				bShowCarryingWeaponPanel = false;
+			}
+		}
+
+		// the mvm money dialog tramples this, less so in minmode but still applies
+		if (TFGameRules()->IsMannVsMachineMode())
+			bShowCarryingWeaponPanel = false;
+
+		if (bShowCarryingWeaponPanel && pPlayer->GetActiveTFWeapon() && pPlayer->GetActiveTFWeapon()->GetAttributeContainer())
 		{
 			CEconItemView* pItem = pPlayer->GetActiveTFWeapon()->GetAttributeContainer()->GetItem();
 			if ( pItem )
@@ -375,14 +390,6 @@ void CTFHudPlayerClass::OnThink()
 		else
 		{
 			bShowCarryingWeaponPanel = false;
-		}
-
-		if ( CTFPlayerDestructionLogic::GetRobotDestructionLogic() && ( CTFPlayerDestructionLogic::GetRobotDestructionLogic()->GetType() == CTFPlayerDestructionLogic::TYPE_PLAYER_DESTRUCTION ) )
-		{
-			if ( pPlayer->HasTheFlag() )
-			{
-				bShowCarryingWeaponPanel = false;			
-			}
 		}
 
 		m_pCarryingWeaponPanel->SetVisible( bShowCarryingWeaponPanel );
@@ -848,7 +855,33 @@ void CTFHudPlayerHealth::SetHealth( int iNewHealth, int iMaxHealth, int	iMaxBuff
 	{
 		SetDialogVariable( "Health", m_nHealth );
 
-		if ( m_nMaxHealth - m_nHealth >= 5 )
+		bool maxHealthCondition = !m_bBuilding;
+		if ( maxHealthCondition )
+		{
+			switch ( cl_hud_max_health_behaviour.GetInt() )
+			{
+				case 0:
+					// never show
+					maxHealthCondition = false;
+					break;
+				default:
+				case 1:
+					// show when health is 5 below max or more (default)
+					maxHealthCondition = m_nMaxHealth - m_nHealth >= 5;
+					break;
+				case 2:
+					// show when health does not match the max
+					maxHealthCondition = m_nHealth != m_nMaxHealth;
+					break;
+				case 3:
+					// show always
+					maxHealthCondition = true;
+					break;
+			}
+		}
+
+
+		if ( maxHealthCondition )
 		{
 			SetDialogVariable( "MaxHealth", m_nMaxHealth );
 		}
