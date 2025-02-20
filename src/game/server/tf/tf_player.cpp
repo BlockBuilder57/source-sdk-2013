@@ -6713,7 +6713,8 @@ void CTFPlayer::ChangeTeam( int iTeamNum, bool bAutoTeam, bool bSilent, bool bAu
 	}
 	else // active player
 	{
-		bool bKill = true;
+		// block 2025-02-20: allows cf_setclass to not kill the player when switching class
+		bool bKill = !m_bAllowInstantSpawn;
 
 
 		if ( bKill && !IsDead() && (iOldTeam == TF_TEAM_RED || iOldTeam == TF_TEAM_BLUE) )
@@ -15686,6 +15687,38 @@ void CTFPlayer::CreateRagdollEntity( bool bGib, bool bBurning, bool bElectrocute
 
 	// Save ragdoll handle.
 	m_hRagdoll = pRagdoll;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Crispy Fortress ragdoll thing
+//-----------------------------------------------------------------------------
+void CTFPlayer::CreateCrispyRagdollEntity( bool bGib, bool bBurning, bool bElectrocuted, bool bOnGround, bool bCloakedCorpse, bool bGoldRagdoll, bool bIceRagdoll, bool bBecomeAsh, int iDamageCustom, bool bCritOnHardHit )
+{
+	// Create a ragdoll.
+	CTFRagdoll *pRagdoll = dynamic_cast<CTFRagdoll*>( CreateEntityByName( "tf_ragdoll" ) );
+	if ( pRagdoll )
+	{
+		pRagdoll->m_vecRagdollOrigin = GetAbsOrigin();
+		pRagdoll->m_vecRagdollVelocity = GetAbsVelocity();
+		pRagdoll->m_vecForce = m_vecForce;
+		pRagdoll->m_nForceBone = m_nForceBone;
+		pRagdoll->m_hPlayer = this;
+		pRagdoll->m_bGib = bGib;
+		pRagdoll->m_bBurning = bBurning;
+		pRagdoll->m_bElectrocuted = bElectrocuted;
+		pRagdoll->m_bOnGround = bOnGround;
+		pRagdoll->m_bCloaked = bCloakedCorpse;
+		pRagdoll->m_iDamageCustom = iDamageCustom;
+		pRagdoll->m_iTeam = GetTeamNumber();
+		pRagdoll->m_iClass = GetPlayerClass()->GetClassIndex();
+		pRagdoll->m_bGoldRagdoll = bGoldRagdoll;
+		pRagdoll->m_bIceRagdoll = bIceRagdoll;
+		pRagdoll->m_bBecomeAsh = bBecomeAsh;
+		pRagdoll->m_bCritOnHardHit = bCritOnHardHit;
+		pRagdoll->m_flHeadScale = m_flHeadScale;
+		pRagdoll->m_flTorsoScale = m_flTorsoScale;
+		pRagdoll->m_flHandScale = m_flHandScale;
+	}
 }
 
 //-----------------------------------------------------------------------------

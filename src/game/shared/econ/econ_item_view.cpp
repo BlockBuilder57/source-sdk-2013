@@ -1779,6 +1779,27 @@ void CAttributeList::SetRuntimeAttributeValue( const CEconItemAttributeDefinitio
 	NotifyManagerOfAttributeValueChanges();
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CAttributeList::GetRuntimeAttributeValue( const CEconItemAttributeDefinition *pAttrDef )
+{
+	Assert( pAttrDef );
+	
+	// Look for an existing attribute.
+	const int iAttributes = GetNumAttributes();
+	for ( int i = 0; i < iAttributes; i++ )
+	{
+		CEconItemAttribute *pAttribute = GetAttribute(i);
+
+		if ( pAttribute->GetAttribIndex() == pAttrDef->GetDefinitionIndex() )
+			return pAttribute->m_flValue;
+	}
+
+	AssertMsg1( false, "Unable to find attribute '%s' for getting value!", pAttrDef->GetDefinitionName() );
+	return 0;
+}
+
 #if ENABLE_ATTRIBUTE_CURRENCY_TRACKING
 //-----------------------------------------------------------------------------
 // Purpose: 

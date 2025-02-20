@@ -38,7 +38,7 @@ public:
 	// Generate the base item for a class's loadout slot 
 	CBaseEntity *GenerateBaseItem( struct baseitemcriteria_t *pCriteria );
 
-private:
+//private:
 	// Create a new instance of the chosen item
 	CBaseEntity *SpawnItem( int iChosenItem, const Vector &vecAbsOrigin, const QAngle &vecAbsAngles, int iItemLevel, entityquality_t entityQuality, const char *pszOverrideClassName );
 	CBaseEntity *SpawnItem( const CEconItemView *pData, const Vector &vecAbsOrigin, const QAngle &vecAbsAngles, const char *pszOverrideClassName );

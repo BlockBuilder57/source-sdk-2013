@@ -26,6 +26,17 @@ $Configuration
 
 $Project "Server (TF)"
 {
+	$Folder "Crispy Fortress"
+	{
+		$File	"$SRCDIR\game\shared\tf\crispy\crispy_util.cpp"
+		$File	"$SRCDIR\game\shared\tf\crispy\crispy_util.h"
+
+		$File	"tf\crispy\crispyfortress.cpp"
+		$File	"tf\crispy\crispyfortress.h"
+		$File	"tf\crispy\cf_econtools.cpp"
+		$File	"tf\crispy\cf_playertools.cpp"
+	}
+
 	$Folder	"Source Files"
 	{
 		-$File	"AI_ConCommands.cpp"

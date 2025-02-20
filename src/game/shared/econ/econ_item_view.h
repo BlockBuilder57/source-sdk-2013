@@ -78,6 +78,7 @@ public:
 	// The only way to set the value of an attribute after its creation is through the attribute list 
 	// that contains it. This way the matching attribute manager is told one of its attributes has changed.
 	void					SetRuntimeAttributeValue( const CEconItemAttributeDefinition *pAttrDef, float flValue );
+	float					GetRuntimeAttributeValue(const CEconItemAttributeDefinition* pAttrDef);
 #if ENABLE_ATTRIBUTE_CURRENCY_TRACKING
 	void					SetRuntimeAttributeRefundableCurrency( const CEconItemAttributeDefinition *pAttrDef, int iRefundableCurrency );
 	int						GetRuntimeAttributeRefundableCurrency( const CEconItemAttributeDefinition *pAttrDef ) const;
@@ -91,11 +92,13 @@ public:
 private:
 	void					NotifyManagerOfAttributeValueChanges();
 
+public:
 	// Attribute accessing
 	int						GetNumAttributes( void ) const { return m_Attributes.Count(); }
 	CEconItemAttribute		*GetAttribute( int iIndex ) { Assert( iIndex >= 0 && iIndex < m_Attributes.Count()); return &m_Attributes[iIndex]; }
 	const CEconItemAttribute *GetAttribute( int iIndex ) const { Assert( iIndex >= 0 && iIndex < m_Attributes.Count()); return &m_Attributes[iIndex]; }
 
+private:
 	// Our list of attributes
 	CUtlVector<CEconItemAttribute>		m_Attributes;
 
