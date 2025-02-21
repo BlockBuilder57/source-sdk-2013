@@ -1,14 +1,43 @@
-# game specific gitignores
+###### game specific gitignores
 
-# executables
+### executables
 *.exe
 bin/
 mod_*/bin/
 
-# configuration
+### misc assets
+platform/
+*.dem
+mod_*/demos/
+mod_*/screenshots/
+mod_tf/match/
+
+### maps (/map and /mapsrc)
+mod_*/map*/
+# preserve vmfs
+!mod_*/map*/*.vmf
+
+### configuration/metadata
 steam_appid.txt
+mod_*/*.cache
+mod_*/cache/
+mod_*/demoheader.tmp
+mod_*/[Gg]ame[Ss]tate.txt
+mod_*/glshaders.cfg
+mod_*/stats.txt
+mod_*/videoconfig_linux.cfg
+mod_*/voice_ban.dt
+
+mod_*/cfg/*.cfg
+!mod_*/cfg/skill*.cfg
+mod_*/cfg/*.scr
+mod_*/cfg/*.txt
+!mod_tf/cfg/motd_*.txt
+
+mod_tf/media/viewed.res
 mod_tf/tf2_playerstats.dmx
 
-# multiplayer
-mod_*/download*
-mod_tf/voice_ban.dt
+### multiplayer
+mod_*/download/
+mod_*/downloadlists/
+mod_tf/replay/
