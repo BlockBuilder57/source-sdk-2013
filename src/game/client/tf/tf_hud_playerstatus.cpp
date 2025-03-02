@@ -38,10 +38,9 @@ using namespace vgui;
 
 ConVar cl_hud_playerclass_use_playermodel( "cl_hud_playerclass_use_playermodel", "1", FCVAR_ARCHIVE, "Use player model in player class HUD." );
 
-
 ConVar cl_hud_playerclass_playermodel_showed_confirm_dialog( "cl_hud_playerclass_playermodel_showed_confirm_dialog", "0", FCVAR_ARCHIVE | FCVAR_HIDDEN );
 
-ConVar cl_hud_max_health_behaviour("cl_hud_max_health_behaviour", "1", FCVAR_ARCHIVE, "Determines the behaviour of the max health display.\n0 - Hide, 1 - Show when health is 5 or more less than max, 2 - Show when health is not max health, 3 - Show always");
+ConVar cl_hud_max_health_behavior( "cl_hud_max_health_behavior", "1", FCVAR_ARCHIVE, "Determines the behavior of the max health display.\n0 - Hide, 1 - Show when health is 5 or more less than max, 2 - Show when health is not max health, 3 - Show always");
 
 extern ConVar tf_max_health_boost;
 
@@ -858,7 +857,7 @@ void CTFHudPlayerHealth::SetHealth( int iNewHealth, int iMaxHealth, int	iMaxBuff
 		bool maxHealthCondition = !m_bBuilding;
 		if ( maxHealthCondition )
 		{
-			switch ( cl_hud_max_health_behaviour.GetInt() )
+			switch ( cl_hud_max_health_behavior.GetInt() )
 			{
 				case 0:
 					// never show

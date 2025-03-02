@@ -37,6 +37,9 @@
 
 extern ConVar cl_hud_minmode;
 
+extern ConVar tf_hud_target_id_enemy_behavior;
+extern ConVar tf_hud_target_id_enemy_floating_health;
+
 DECLARE_HUDELEMENT( CMainTargetID );
 DECLARE_HUDELEMENT( CSpectatorTargetID );
 DECLARE_HUDELEMENT( CSecondaryTargetID );
@@ -74,7 +77,6 @@ ConVar tf_hud_target_id_alpha( "tf_hud_target_id_alpha", "100", FCVAR_ARCHIVE, "
 ConVar tf_hud_target_id_offset( "tf_hud_target_id_offset", "0", FCVAR_ARCHIVE, "RES file Y offset for target id" );
 ConVar tf_hud_target_id_show_avatars( "tf_hud_target_id_show_avatars", "2", FCVAR_ARCHIVE, "Display Steam avatars on TargetID when using floating health icons.  1 = everyone, 2 = friends only." );
 
-
 bool ShouldHealthBarBeVisible( CBaseEntity *pTarget, CTFPlayer *pLocalPlayer )
 {
 	if ( !pTarget || !pLocalPlayer )
@@ -94,18 +96,27 @@ bool ShouldHealthBarBeVisible( CBaseEntity *pTarget, CTFPlayer *pLocalPlayer )
 	if ( ( iHideEnemyHealth > 0 ) && !pLocalPlayer->InSameTeam( pTarget ) )
 		return false;
 
-	if ( pLocalPlayer->IsPlayerClass( TF_CLASS_SPY ) )
-		return true;
-
 	if ( pLocalPlayer->InSameTeam( pTarget ) )
 		return true;
 
 	if ( pLocalPlayer->InSameDisguisedTeam( pTarget ) )
 		return true;
 
+	if ( tf_hud_target_id_enemy_floating_health.GetInt() <= 0 )
+		return false;
+
+	// tf_hud_target_id_enemy_floating_health implicit value of 1
+	// let the spy and see_enemy_health check happen as usual
+
+	if ( pLocalPlayer->IsPlayerClass( TF_CLASS_SPY ) )
+		return true;
+
 	int iSeeEnemyHealth = 0;
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pLocalPlayer, iSeeEnemyHealth, see_enemy_health )
 	if ( iSeeEnemyHealth )
+		return true;
+
+	if ( tf_hud_target_id_enemy_floating_health.GetInt() >= 2 )
 		return true;
 	
 	return false;
@@ -373,16 +384,30 @@ bool CTargetID::IsValidIDTarget( int nEntIndex, float flOldTargetRetainFOV, floa
 
 			C_TFPlayer *pPlayer = ToTFPlayer( pEnt );
 
-			int iHideEnemyHealth = 0;
+			int iHideEnemyHealth = 0, iSeeEnemyHealth = 0;
 			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pLocalTFPlayer, iHideEnemyHealth, hide_enemy_health );
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pLocalTFPlayer, iSeeEnemyHealth, see_enemy_health );
 
-			bool bInSameTeam = pLocalTFPlayer->InSameDisguisedTeam( pEnt );	
-			bool bSpy = pLocalTFPlayer->IsPlayerClass( TF_CLASS_SPY ) && iHideEnemyHealth == 0;
+			bool bInSameTeam = pLocalTFPlayer->InSameDisguisedTeam( pEnt );
+			bool bCanSeeEnemyHealth = false;
+
+			if ( iHideEnemyHealth )
+			{
+				bCanSeeEnemyHealth = false;
+			}
+			else if ( tf_hud_target_id_enemy_behavior.GetInt() <= 0 )
+			{
+				bCanSeeEnemyHealth = false;
+			}
+			else if ( tf_hud_target_id_enemy_behavior.GetInt() >= 2 || pLocalTFPlayer->IsPlayerClass( TF_CLASS_SPY ) || iSeeEnemyHealth )
+			{
+				bCanSeeEnemyHealth = true;
+			}
 
 			if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() )
 			{
-				// We don't want to show health bars to the spy in MVM because it's distracting
-				bSpy = false;
+				// We don't want to show robot target ids by default in MVM because it's distracting
+				bCanSeeEnemyHealth = tf_hud_target_id_enemy_behavior.GetInt() >= 3;
 
 				// Are we disguised as the enemy?
 				if ( pLocalTFPlayer->m_Shared.InCond( TF_COND_DISGUISED ) && pLocalTFPlayer->m_Shared.GetDisguiseTeam() != pLocalTFPlayer->GetTeamNumber() )
@@ -404,7 +429,6 @@ bool CTargetID::IsValidIDTarget( int nEntIndex, float flOldTargetRetainFOV, floa
 			}
 
 			bool bSpectator = pLocalTFPlayer->GetTeamNumber() == TEAM_SPECTATOR;
-			int iSeeEnemyHealth = 0;
 			bool bStealthed = false;
 			bool bHealthBarVisible = ShouldHealthBarBeVisible( pEnt, pLocalTFPlayer );
 			bool bShow = bHealthBarVisible;
@@ -416,11 +440,6 @@ bool CTargetID::IsValidIDTarget( int nEntIndex, float flOldTargetRetainFOV, floa
 					bStealthed = true;
 					bHealthBarVisible = false;
 					bShow = false;
-				}
-
-				if ( !bStealthed )
-				{
-					CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pLocalTFPlayer, iSeeEnemyHealth, see_enemy_health );
 				}
 
 				bool bMaintainInFOV = !pLocalTFPlayer->InSameTeam( pEnt );
@@ -452,7 +471,7 @@ bool CTargetID::IsValidIDTarget( int nEntIndex, float flOldTargetRetainFOV, floa
 					flNewTargetRetainFOV = fInterp * 13.0f + 0.75f;
 				}
 
-				bReturn = ( bSpectator || pLocalTFPlayer->InSameTeam( pEnt ) || ( ( bInSameTeam || bSpy || iSeeEnemyHealth ) && !bStealthed ) );
+				bReturn = ( bSpectator || pLocalTFPlayer->InSameTeam( pEnt ) || ( ( bInSameTeam || bCanSeeEnemyHealth ) && !bStealthed ) );
 			}
 
 
@@ -474,13 +493,13 @@ bool CTargetID::IsValidIDTarget( int nEntIndex, float flOldTargetRetainFOV, floa
 				}
 
 				//Recreate the floating health icon if there isn't one, we're not a spectator, and 
-				// we're not a spy or this was a robot from Robot Destruction-Mode
-				if ( !m_pFloatingHealthIcon && !bSpectator && ( !bSpy || bHealthBarVisible ) && !DrawHealthIcon() )
+				// we're not able to see enemy health or this was a robot from Robot Destruction-Mode
+				if ( !m_pFloatingHealthIcon && !bSpectator && ( !bCanSeeEnemyHealth || bHealthBarVisible ) && !DrawHealthIcon() )
 				{
 					m_pFloatingHealthIcon = CFloatingHealthIcon::AddFloatingHealthIcon( pEnt );
 				}
 			}
-			else if ( pEnt->IsBaseObject() && ( bInSameTeam || bSpy ) )
+			else if ( pEnt->IsBaseObject() && ( bInSameTeam || bCanSeeEnemyHealth ) )
 			{
 				bReturn = true;
 			}
@@ -808,7 +827,7 @@ void CTargetID::UpdateID( void )
 				printFormatString = "#TF_playerid_sameteam";
 				bShowHealth = true;
 			}
-			else if ( pLocalTFPlayer->m_Shared.GetState() == TF_STATE_DYING )
+			else //if ( pLocalTFPlayer->m_Shared.GetState() == TF_STATE_DYING )
 			{
 				// We're looking at an enemy who killed us.
 				printFormatString = "#TF_playerid_diffteam";

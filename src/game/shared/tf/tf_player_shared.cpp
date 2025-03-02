@@ -201,6 +201,11 @@ extern ConVar cam_idealdistright;
 
 #endif // CLIENT_DLL
 
+// target_id changes that need to be client replicated
+ConVar tf_hud_target_id_enemy_behavior("tf_hud_target_id_enemy_behavior", "1", FCVAR_ARCHIVE | FCVAR_REPLICATED, "Chooses how to display enemy target ids. 0 - Hide, 1 - Visible to spies/see_enemy_health attrib (default), 2 - Visible for all");
+ConVar tf_hud_target_id_enemy_floating_health("tf_hud_target_id_enemy_floating_health", "1", FCVAR_ARCHIVE | FCVAR_REPLICATED, "Chooses how to display floating health for enemies. 0 - Hide, 1 - Visible to spies/see_enemy_health attrib (default), 2 - Visible for all, 3 - Visible in MvM");
+
+
 extern ConVar tf_flamethrower_flametime;
 extern ConVar weapon_medigun_chargerelease_rate;
 #if defined( _DEBUG ) || defined( STAGING_ONLY )
