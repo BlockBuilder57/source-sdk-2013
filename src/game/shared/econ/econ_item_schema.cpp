@@ -4626,6 +4626,16 @@ bool CEconItemSchema::BInitSchema( KeyValues *pKVRawDefinition, CUtlVector<CUtlS
 {
 	double flInitSchemaTime = Plat_FloatTime();
 
+	// crispy fortress - crispy items
+	// we load keyvalues from item_game_crispy.txt, and merge them into the raw definition
+	KeyValuesAD pCrispyItemsGameKV( "CrispyItemsGameFile" );
+	if ( pCrispyItemsGameKV->LoadFromFile( g_pFullFileSystem, "scripts/items/items_game_crispy.txt", "GAME" ) )
+	{
+		Msg("Found items_game_crispy.txt, loading contents over items_game.txt...\n");
+		// explicitly prioritize crispy values over the definition
+		RecursiveInheritKeyValues( pKVRawDefinition, pCrispyItemsGameKV );
+	}
+
 	m_unMinLevel = pKVRawDefinition->GetInt( "item_level_min", 0 );
 	m_unMaxLevel = pKVRawDefinition->GetInt( "item_level_max", 0 );
 

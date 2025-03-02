@@ -1,0 +1,381 @@
+"crispy_items_game"
+{
+	"prefabs"
+	{
+	}
+	"items"
+	{
+		"57000"
+		{
+			"name"	"The Crispy Launcher"
+			"prefab"	"weapon_grenade_launcher"
+			"first_sale_date"	"2021/01/09"
+			"item_name"	"Crispy Launcher"
+			"propername"	"1"
+			
+			"attributes"
+			{
+				"Reload time decreased"
+				{
+					"attribute_class"	"inverted_percentage"
+					"value"	"0.1"
+				}
+				"fire rate bonus"
+				{
+					"attribute_class"	"mult_postfiredelay"
+					"value" "0.05"
+				}
+				"clip size bonus"
+				{
+					"attribute_class"	"mult_clipsize"
+					"value" "16"
+				}
+				"auto fires full clip"
+				{
+					"attribute_class"	"auto_fires_full_clip"
+					"value"	"1"
+				}
+				"maxammo primary increased"
+				{
+					"attribute_class"	"mult_maxammo_primary"
+					"value" "20"
+				}
+				
+				"heal on hit for rapidfire"
+				{
+					"attribute_class"	"add_onhit_addhealth"
+					"value"	"1"
+				}
+				"critboost on kill"
+				{
+					"attribute_class"	"add_onkill_critboost_time"
+					"value"	"3"
+				}
+			}
+			"visuals"
+			{
+				"styles"
+				{
+					"0"
+					{
+						"skin_red"	"2"
+						"skin_blu"	"3"
+						"image_inventory"	"backpack/weapons/w_models/w_grenadelauncher_gold"
+					}
+				}
+				"attached_models_festive"
+				{
+					"0"
+					{
+						"model"	"models/weapons/c_models/c_grenadelauncher/c_grenadelauncher_festivizer.mdl"
+					}
+				}
+			}
+		}
+		
+		"57001"
+		{
+			"name"	"The Crispybomb Launcher"
+			"prefab"	"weapon_stickybomb_launcher"
+			"first_sale_date"	"2021/01/09"
+			"item_name"	"Crispybomb Launcher"
+			"propername"	"1"
+			
+			"attributes"
+			{
+				"Reload time decreased"
+				{
+					"attribute_class"	"inverted_percentage"
+					"value"	"0.1"
+				}
+				"fire rate bonus"
+				{
+					"attribute_class"	"mult_postfiredelay"
+					"value" "0.05"
+				}
+				"clip size bonus"
+				{
+					"attribute_class"	"mult_clipsize"
+					"value" "8"
+				}
+				"maxammo secondary increased"
+				{
+					"attribute_class"	"mult_maxammo_secondary"
+					"value" "20"
+				}
+				"sticky arm time bonus"
+				{
+					"attribute_class"	"sticky_arm_time"
+					"value"	"-5"
+				}
+				"stickybomb charge rate"
+				{
+					"attribute_class"	"stickybomb_charge_rate"
+					"value"	"-1"
+				}
+				"max pipebombs increased"
+				{
+					"attribute_class"	"add_max_pipebombs"
+					"value"	"9991"
+				}
+				
+				"item style override"
+				{
+					"attribute_class"	"item_style_override"
+					"value"	"1"
+				}
+			}
+			"visuals"
+			{
+				"styles"
+				{
+					"0"
+					{
+						"skin_red"	"0"
+						"skin_blu"	"1"
+						"selectable"	"0"
+					}
+					"1"
+					{
+						"skin_red"	"8"
+						"skin_blu"	"9"
+						"v_skin_red"	"8"
+						"v_skin_blu"	"9"
+						"selectable"	"0"
+						"image_inventory"	"backpack/weapons/w_models/w_stickybomb_launcher_gold"
+					}
+				}
+				"attached_models_festive"
+				{
+					"0"
+					{
+						"model"	"models/weapons/c_models/c_stickybomb_launcher/c_stickybomb_launcher_festivizer.mdl"
+					}
+				}
+			}
+		}
+		
+		"57900"
+		{
+			"name"	"GiveItem0"
+			"item_class"	"saxxy"
+			"prefab"	"weapon_melee_allclass"
+			"capabilities"
+			{
+				"nameable"		"1"
+			}
+			"tags"
+			{
+				"can_deal_damage"			"1"
+				"can_deal_critical_damage"	"1"
+				"can_be_equipped_by_soldier_or_demo"	"1"
+			}
+			"item_logname"	"golden_fryingpan"
+			"item_iconname"	"golden_fryingpan"
+			"show_in_armory"	"1"
+			"item_type_name"	"#TF_Weapon_GoldFryingPan"
+			"item_name"	"#TF_Gold_FryingPan"
+			"item_slot"	"melee"
+			"image_inventory"	"backpack/weapons/c_models/c_frying_pan/c_frying_pan_gold"
+			"image_inventory_size_w"		"128"
+			"image_inventory_size_h"		"82"
+			"model_player"	"models/weapons/c_models/c_frying_pan/c_frying_pan.mdl"
+			"attach_to_hands"	"1"
+			"inspect_panel_dist" "40"
+			"item_quality"	"unique"
+			"propername"	"1"
+			"min_ilevel"	"1"
+			"max_ilevel"	"100"
+			"anim_slot" "MELEE_ALLCLASS"
+			"xifier_class_remap"	"Frying Pan"
+			"used_by_classes"
+			{
+				"scout"	"1"
+				"sniper"	"1"
+				"soldier"	"1"
+				"demoman"	"1"
+				"medic"	"1"
+				"heavy"	"1"
+				"pyro" "1"
+				"spy" "1"
+				"engineer" "1"
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset"		"10 -3 -7"
+			}
+			"attributes"
+			{
+				"item style override"
+				{
+					"attribute_class"	"item_style_override"
+					"value"	"0"
+				}
+				"turn to gold"
+				{
+					"attribute_class"	"set_turn_to_gold"
+					"value" "1"
+				}
+				"melee attack rate bonus"
+				{
+					"attribute_class"	"mult_postfiredelay"
+					"value"	"1"
+				}
+			}
+			"visuals"
+			{
+				"sound_melee_hit"		"FryingPan.HitFlesh"
+				"sound_melee_hit_world"	"FryingPan.HitWorld"
+				"sound_melee_miss"	"Weapon_Machete.Miss"
+				"sound_burst"		"Weapon_Machete.MissCrit"
+
+				"styles"
+				{
+					"0"
+					{
+						"skin_red" "2"
+						"skin_blu" "3"
+					}
+				}
+			}
+			"mouse_pressed_sound"	"ui/item_metal_weapon_pickup.wav"
+			"drop_sound"		"ui/item_metal_weapon_drop.wav"
+		}
+		"57901"
+		{
+			"name"		"GiveItem1"
+			"prefab"		"paintkit_weapon_minigun"
+			"tags"
+			{
+				"can_be_festivized"		"1"
+			}
+			"attributes"
+			{
+				"texture_wear_default"
+				{
+					"attribute_class"	"texture_wear_default"
+					"value"	"0"
+				}
+				"minigun no spin sounds"
+				{
+					"attribute_class"	"minigun_no_spin_sounds"
+					"value"	"1"
+				}
+				"aiming movespeed increased"
+				{
+					"attribute_class"	"mult_player_aiming_movespeed"
+					"value"	"1"
+				}
+				"weapon spread bonus"
+				{
+					"attribute_class"	"mult_spread_scale"
+					"value"	"0"
+				}
+				"fire rate bonus"
+				{
+					"attribute_class"	"mult_postfiredelay"
+					"value"	"0.01"
+				}
+				"clip size bonus"
+				{
+					"attribute_class"	"mult_clipsize"
+					"value"	"20"
+				}
+				"maxammo primary increased"
+				{
+					"attribute_class"	"mult_maxammo_primary"
+					"value"	"8"
+				}
+				"revolver use hit locations"
+				{
+					"attribute_class"	"set_weapon_mode"
+					"value"	"1"
+				}
+			}
+			"visuals"
+			{
+				"attached_models_festive"
+				{
+					"0"
+					{
+						"model"	"models/weapons/c_models/c_minigun/c_minigun_festivizer.mdl"
+					}
+				}
+			}
+			"static_attrs"
+			{
+				"has team color paintkit"		"1"
+				"paintkit_proto_def_index"		"40"
+			}
+		}
+		
+		"65000"
+		{
+			"name"	"TF_WEAPON_UMBRELLA"
+			"item_name"	"Umbrella"
+			"first_sale_date"	"2010/09/29"
+			"tags"
+			{
+				"can_deal_damage"	"1"
+				"can_deal_critical_damage"	"1"
+			}
+			"item_class"	"tf_weapon_umbrella"
+			"craft_class"	"weapon"
+			"craft_material_type"	"weapon"
+			"item_type_name"	"#TF_Weapon_Umbrella"
+			"item_name"	"#TF_Weapon_Umbrella"
+			"item_slot"	"melee"
+			"anim_slot"	"melee"
+			"item_quality"	"normal"
+			"baseitem"	"1"
+			"min_ilevel"	"1"
+			"max_ilevel"	"1"
+			"image_inventory"	"backpack/weapons/w_models/w_umbrella"
+			"image_inventory_size_w"	"128"
+			"image_inventory_size_h"	"82"
+			"attach_to_hands"	"2"
+			"model_world"	"models/weapons/w_models/w_umbrella.mdl"
+			"model_player"	"models/weapons/v_models/v_umbrella_civilian.mdl"
+			"used_by_classes"
+			{
+				"civilian" "1"
+			}
+			"mouse_pressed_sound"	"ui/item_metal_weapon_pickup.wav"
+			"drop_sound"	"ui/item_metal_weapon_drop.wav"
+		}
+		
+		"65001"
+		{
+			"name"	"TF_WEAPON_ROCKETLAUNCHER_MORTAR"
+			"first_sale_date"	"2010/09/29"
+			"prefab"	"weapon_rocketlauncher"
+			"item_class"	"tf_weapon_rocketlauncher_mortar"
+			"xifier_class_remap"	"rocket_launcher"
+			"item_name"			"#TF_Weapon_RocketLauncher_Mortar"
+			"baseitem" "1"
+		}
+	}
+	"attributes"
+	{
+		"5000"
+		{
+			"name"	"medic machinery beam"
+			"attribute_class"	"medic_machinery_beam"
+			"description_string"	"#Attrib_BulletsPerShot_Bonus"
+			"description_format"	"value_is_additive"
+			"hidden"	"0"
+			"effect_type"	"positive"
+			"stored_as_integer"	"1"
+		}
+		"57000"
+		{
+			"name"	"engy extra sentries"
+			"attribute_class"	"engy_extra_sentries"
+			"description_string"	"#Attrib_EngyDisposableSentries"
+			"description_format"	"value_is_additive"
+			"hidden"	"0"
+			"effect_type"	"positive"
+			"stored_as_integer"	"0"
+		}
+	}
+}
