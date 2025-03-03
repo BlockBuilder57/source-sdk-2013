@@ -307,6 +307,37 @@ bool CTFViewModel::OnPostInternalDrawModel( ClientModelRenderInfo_t *pInfo )
 	return true;
 }
 
+void CC_RecompositeSkins_f()
+{
+	for ( int i = 0; i < cl_entitylist->NumberOfEntities( true ); i++ )
+	{
+		C_BaseEntity* pEnt = cl_entitylist->GetBaseEntity(i);
+		if ( !pEnt )
+			continue;
+
+		//Msg("%d %s\n", i, pEnt->GetClassname());
+
+		if ( !V_strcmp( pEnt->GetClassname(), "viewmodel" ) )
+		{
+			CTFViewModel* pViewmodel = dynamic_cast<CTFViewModel*>( pEnt );
+			if ( !pViewmodel )
+				continue;
+
+			CAttributeContainer* pAttribContainer = pViewmodel->GetOwningWeapon()->GetAttributeContainer();
+			if ( !pAttribContainer )
+				continue;
+
+			CEconItemView* pItem = pAttribContainer->GetItem();
+			if ( !pItem )
+				continue;
+
+			pItem->SetWeaponSkinBase( NULL );
+			pItem->SetWeaponSkinBaseCompositor( NULL );
+		}
+	}
+}
+ConCommand CC_RecompositeSkins( "tf_viewmodel_recomposite_skins", CC_RecompositeSkins_f, "Recomposite (reset and re-render) skins", FCVAR_NONE );
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
