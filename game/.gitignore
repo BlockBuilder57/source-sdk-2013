@@ -2,25 +2,25 @@
 
 ### executables
 *.exe
-bin/
-mod_*/bin/
+bin/*
+mod_*/bin/*
 
 ### misc assets
-platform/
+platform/*
 *.dem
-mod_*/demos/
-mod_*/screenshots/
-mod_tf/match/
+mod_*/demos/*
+mod_*/screenshots/*
+mod_tf/match/*
 
 ### maps (/map and /mapsrc)
-mod_*/map*/
+mod_*/map*/*
 # preserve vmfs
 !mod_*/map*/*.vmf
 
 ### configuration/metadata
 steam_appid.txt
 mod_*/*.cache
-mod_*/cache/
+mod_*/cache/*
 mod_*/demoheader.tmp
 mod_*/[Gg]ame[Ss]tate.txt
 mod_*/glshaders.cfg
@@ -38,6 +38,6 @@ mod_tf/media/viewed.res
 mod_tf/tf2_playerstats.dmx
 
 ### multiplayer
-mod_*/download/
-mod_*/downloadlists/
-mod_tf/replay/
+mod_*/download/*
+mod_*/downloadlists/*
+mod_tf/replay/*
