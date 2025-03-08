@@ -36,6 +36,7 @@
 #include "nav_mesh/tf_nav_area.h"
 #include "NextBot/NextBotLocomotionInterface.h"
 #include "bot/tf_bot.h"
+#include "tf/tf_bot_temp.h"
 #endif
 
 #if defined( _WIN32 ) || defined( POSIX )
@@ -1208,6 +1209,20 @@ QAngle RotateOrientation( QAngle posAngles, QAngle entAngles )
 	return outAngles;
 }
 
+QAngle ScriptVectorAngles( const Vector forward )
+{
+	QAngle outAngles;
+	VectorAngles( forward, outAngles );
+	return outAngles;
+}
+
+QAngle ScriptVectorAnglesReference( const Vector forward, const Vector pseudoup )
+{
+	QAngle outAngles;
+	VectorAngles( forward, pseudoup, outAngles );
+	return outAngles;
+}
+
 //-----------------------------------------------------------------------------
 static void ParseTable( CBaseEntity *pEntity, HSCRIPT spawn_table, const char *pKeyNameOverride = NULL )
 {
@@ -1668,6 +1683,40 @@ static bool Script_IsPlayerABot( HSCRIPT hEnt )
 {
 	CBasePlayer *pPlayer = ToBasePlayer( ToEnt( hEnt ) );
 	return pPlayer ? pPlayer->IsBot() : false;
+}
+
+#ifdef TF_DLL
+static HSCRIPT Script_CreateFakeClient( const char* pszName = NULL, int iTeam = -1, int iClass = -1 )
+#else
+static HSCRIPT Script_CreateFakeClient( const char* pszName = NULL )
+#endif
+{
+#ifdef TF_DLL
+	if (iTeam == -1)
+		iTeam = RandomInt(FIRST_GAME_TEAM, TF_TEAM_COUNT-1);
+
+	if (iClass == -1)
+		iClass = RandomInt(1, TF_CLASS_COUNT - 2);
+
+	CBasePlayer* pBot = BotPutInServer( false, false, iTeam, iClass, pszName );
+	return ToHScript( pBot );
+#elif 0
+	edict_t *pEdict = engine->CreateFakeClient( pszName );
+	if (!pEdict)
+	{
+		Msg( "Failed to create Bot.\n");
+		return NULL;
+	}
+
+	// replace with your player class!
+	CBasePlayer *pPlayer = ((CBasePlayer *)CBasePlayer::Instance( pEdict ));
+	pPlayer->ClearFlags();
+	pPlayer->AddFlag( FL_CLIENT | FL_FAKECLIENT );
+
+	return ToHScript( pPlayer );
+#endif
+
+	return NULL;
 }
 
 // Users have requested the ability to write to subdirectories of /scriptdata/, so some extra
@@ -2522,6 +2571,9 @@ bool VScriptServerInit()
 
 				ScriptRegisterFunction( g_pScriptVM, RotatePosition, "Rotate a Vector around a point." );
 				ScriptRegisterFunction( g_pScriptVM, RotateOrientation, "Rotate a QAngle by another QAngle." );
+				ScriptRegisterFunctionNamed( g_pScriptVM, ScriptVectorAngles, "VectorAngles", "Create a QAngle from a direction vector, relative to the world." );
+				ScriptRegisterFunctionNamed( g_pScriptVM, ScriptVectorAnglesReference, "VectorAnglesReference", "Create a QAngle from a direction vector, relative to a provided vector." );
+
 				ScriptRegisterFunctionNamed( g_pScriptVM, Script_EmitSoundOn, "EmitSoundOn", "Play named sound on Entity. Legacy only, use EmitSoundEx." );
 				ScriptRegisterFunctionNamed( g_pScriptVM, Script_EmitSoundOnClient, "EmitSoundOnClient", "Play named sound only on the client for the passed in player. NOTE: This only supports soundscripts. Legacy only, use EmitSoundEx." );
 				ScriptRegisterFunctionNamed( g_pScriptVM, Script_EmitSoundEx, "EmitSoundEx", "Play a sound. Takes in a script table of params." );
@@ -2534,6 +2586,8 @@ bool VScriptServerInit()
 
 				ScriptRegisterFunctionNamed( g_pScriptVM, Script_GetPlayerFromUserID, "GetPlayerFromUserID", "Given a user id, return the entity, or null");
 				ScriptRegisterFunctionNamed( g_pScriptVM, Script_IsPlayerABot, "IsPlayerABot", "Is this player/entity a bot");
+
+				ScriptRegisterFunctionNamed( g_pScriptVM, Script_CreateFakeClient, "CreateFakeClient", "Creates a bot." );
 
 				ScriptRegisterFunctionNamed( g_pScriptVM, NDebugOverlay::ScreenTextLine, "DebugDrawScreenTextLine", "Draw text with a line offset" );
 				ScriptRegisterFunctionNamed( g_pScriptVM, NDebugOverlay::Text, "DebugDrawText", "Draw text in 3d (origin, text, bViewCheck, duration)" );
