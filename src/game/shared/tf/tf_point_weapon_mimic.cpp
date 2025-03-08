@@ -1,68 +1,18 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 
 #include "cbase.h"
-#include "tf_projectile_rocket.h"
-#include "tf_projectile_arrow.h"
-#include "tf_weapon_grenade_pipebomb.h"
-
-class CTFPointWeaponMimic : public CPointEntity
-{
-	DECLARE_CLASS( CTFPointWeaponMimic, CPointEntity );
-public:
-	DECLARE_DATADESC();
-
-	CTFPointWeaponMimic();
-	~CTFPointWeaponMimic();
-	virtual void Spawn();
-
-	void InputFireOnce( inputdata_t& inputdata );
-	void InputFireMultiple( inputdata_t& inputdata );
-	void DetonateStickies( inputdata_t& inputdata );
-private:
-	void Fire();
-
-	void FireRocket();
-	void FireGrenade();
-	void FireArrow();
-	void FireStickyGrenade();
-
-	enum eWeaponType
-	{
-		WEAPON_STANDARD_ROCKET,
-		WEAPON_STANDARD_GRENADE,
-		WEAPON_STANDARD_ARROW,
-		WEAPON_STICKY_GRENADE,
-
-		WEAPON_TYPES
-	};
-
-	QAngle GetFiringAngles() const;
-	float GetSpeed() const;
-
-	int m_nWeaponType;
-	bool m_bContinousFire;
-
-	// Effects for firing
-	const char* m_pzsFireSound;
-	const char* m_pzsFireParticles;
-
-	// Override/defaults for the projectile/bullets
-	const char* m_pzsModelOverride;
-	float		m_flModelScale;
-	float		m_flSpeedMin;
-	float		m_flSpeedMax;
-	float		m_flDamage;
-	float		m_flSplashRadius;
-	float		m_flSpreadAngle;
-	bool		m_bCrits;
-
-	// List of active pipebombs
-	typedef CHandle<CTFGrenadePipebombProjectile>	PipebombHandle;
-	CUtlVector<PipebombHandle>		m_Pipebombs;
-};
+#include "tf_point_weapon_mimic.h"
+// memdbgon must be the last include file in a .cpp file!!!
+#include "tier0/memdbgon.h"
 
 LINK_ENTITY_TO_CLASS( tf_point_weapon_mimic, CTFPointWeaponMimic );
 
+IMPLEMENT_NETWORKCLASS_ALIASED( TFPointWeaponMimic, DT_TFPointWeaponMimic )
+
+BEGIN_NETWORK_TABLE( CTFPointWeaponMimic, DT_TFPointWeaponMimic )
+END_NETWORK_TABLE()
+
+#ifdef GAME_DLL
 // Data Description
 BEGIN_DATADESC( CTFPointWeaponMimic )
 
@@ -81,18 +31,46 @@ BEGIN_DATADESC( CTFPointWeaponMimic )
 
 	DEFINE_INPUTFUNC( FIELD_VOID, "FireOnce", InputFireOnce ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "FireMultiple", InputFireMultiple ),
-	DEFINE_INPUTFUNC( FIELD_VOID, "DetonateStickies", DetonateStickies ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "DetonateStickies", InputDetonateStickies ),
+
 END_DATADESC()
 
+BEGIN_ENT_SCRIPTDESC( CTFPointWeaponMimic, CBaseEntity , "TF Weapon Mimic" )
+	DEFINE_SCRIPTFUNC( Fire, "Fire the mimic weapon" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptFireMultiple, "FireMultiple", "Fire the mimic weapon" )
 
+	DEFINE_SCRIPTFUNC( FireRocket, "Fire a rocket" )
+	DEFINE_SCRIPTFUNC( FireGrenade, "Fire a grenade" )
+	DEFINE_SCRIPTFUNC( FireArrow, "Fire an arrow" )
+	DEFINE_SCRIPTFUNC( FireStickyGrenade, "Fire a stickybomb" )
+
+	DEFINE_SCRIPTFUNC( DetonateStickies, "Detonate stickybombs" )
+
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSetModelScale, "SetModelScale", "Sets the scale of the projectiles" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSetMinSpeed, "SetMinSpeed", "Sets the minimum speed range of the projectiles" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSetMaxSpeed, "SetMaxSpeed", "Sets the maximum speed range of the projectiles" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSetDamage, "SetDamage", "Sets the base damage of the projectiles" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSetSplashRadius, "SetSplashRadius", "Sets the splash radius of the projectiles" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSetSpreadAngle, "SetSpreadAngle", "Sets the spread angle of the projectiles" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSetForceCrits, "SetForceCrits", "Decides whether projectiles should be crits" )
+END_SCRIPTDESC();
+#endif
 
 CTFPointWeaponMimic::CTFPointWeaponMimic()
-: m_pzsModelOverride( NULL )
 {
-}
+	// This entity was designed for MvM, and was hardcoded to fire blue projectiles
+	// To avoid breaking old maps, let's act as blue by default
+	// The keyfield should (intentionally) clobber this later, if it exists.
+	ChangeTeam( TF_TEAM_BLUE );
 
-CTFPointWeaponMimic::~CTFPointWeaponMimic()
-{
+#ifdef GAME_DLL
+	m_flModelScale = 1.0f;
+	m_flSpeedMin = m_flSpeedMax = 1000.0f;
+	m_flDamage = 75.0f;
+	m_flSplashRadius = 50.0f;
+	m_flSpreadAngle = 0.0f;
+	m_bCrits = false;
+#endif
 }
 
 
@@ -100,15 +78,15 @@ void CTFPointWeaponMimic::Spawn()
 {
 	BaseClass::Spawn();
 
+#ifdef GAME_DLL
 	if( m_pzsModelOverride )
 	{
 		PrecacheModel( m_pzsModelOverride );
 	}
-
-	ChangeTeam( TF_TEAM_BLUE );
+#endif
 }
 
-
+#ifdef GAME_DLL
 void CTFPointWeaponMimic::InputFireOnce( inputdata_t& inputdata )
 {
 	Fire();
@@ -124,7 +102,12 @@ void CTFPointWeaponMimic::InputFireMultiple( inputdata_t& inputdata )
 	}
 }
 
-void CTFPointWeaponMimic::DetonateStickies( inputdata_t& inputdata )
+void CTFPointWeaponMimic::InputDetonateStickies( inputdata_t &inputdata )
+{
+	DetonateStickies();
+}
+
+void CTFPointWeaponMimic::DetonateStickies()
 {
 	int count = m_Pipebombs.Count();
 
@@ -142,6 +125,17 @@ void CTFPointWeaponMimic::DetonateStickies( inputdata_t& inputdata )
 	}
 
 	m_Pipebombs.Purge();
+}
+
+
+void CTFPointWeaponMimic::ScriptFireMultiple( int times /* = 1 */ )
+{
+	int nNumFires = Max( 1, abs(times) );
+
+	while( nNumFires-- )
+	{
+		Fire();
+	}
 }
 
 
@@ -176,7 +170,7 @@ void CTFPointWeaponMimic::FireRocket()
 		{
 			pProjectile->SetModel( m_pzsModelOverride );
 		}
-		pProjectile->ChangeTeam( TF_TEAM_BLUE );
+
 		pProjectile->SetCritical( m_bCrits );
 		pProjectile->SetDamage( m_flDamage );
 		Vector vVelocity = pProjectile->GetAbsVelocity().Normalized() * GetSpeed();
@@ -202,8 +196,6 @@ void CTFPointWeaponMimic::FireGrenade()
 			pGrenade->SetModel( m_pzsModelOverride );
 		}
 		pGrenade->InitGrenade( vVelocity, AngularImpulse( 600, random->RandomInt( -1200, 1200 ), 0 ), NULL, m_flDamage, m_flSplashRadius );
-		pGrenade->ChangeTeam( TF_TEAM_BLUE );
-		pGrenade->m_nSkin = 1;
 		pGrenade->SetDetonateTimerLength( 2.f );
 		pGrenade->SetModelScale( m_flModelScale );
 		pGrenade->SetCollisionGroup( TFCOLLISION_GROUP_ROCKETS );  // we want to use collision_group_rockets so we don't ever collide with players
@@ -227,7 +219,7 @@ void CTFPointWeaponMimic::FireArrow()
 		{
 			pProjectile->SetModel( m_pzsModelOverride );
 		}
-		pProjectile->ChangeTeam( TF_TEAM_BLUE );
+		pProjectile->ChangeTeam( GetTeamNumber() );
 		pProjectile->SetCritical( m_bCrits );
 		pProjectile->SetDamage( m_flDamage );
 		Vector vVelocity = pProjectile->GetAbsVelocity().Normalized() * GetSpeed();
@@ -272,7 +264,7 @@ void CTFPointWeaponMimic::FireStickyGrenade()
 		pGrenade->SetFullDamage( m_flDamage );
 		pGrenade->SetDamageRadius( m_flSplashRadius );
 		pGrenade->SetCritical( m_bCrits );
-		pGrenade->ChangeTeam( TF_TEAM_BLUE );
+		pGrenade->ChangeTeam( GetTeamNumber() );
 		pGrenade->m_nSkin = 1;
 
 		m_Pipebombs.AddToTail( pGrenade );
@@ -310,3 +302,5 @@ float CTFPointWeaponMimic::GetSpeed() const
 {
 	return RandomFloat( m_flSpeedMin, m_flSpeedMax );
 }
+
+#endif 
