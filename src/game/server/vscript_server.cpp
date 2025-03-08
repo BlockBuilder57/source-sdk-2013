@@ -1208,6 +1208,20 @@ QAngle RotateOrientation( QAngle posAngles, QAngle entAngles )
 	return outAngles;
 }
 
+QAngle ScriptVectorAngles( const Vector forward )
+{
+	QAngle outAngles;
+	VectorAngles( forward, outAngles );
+	return outAngles;
+}
+
+QAngle ScriptVectorAnglesReference( const Vector forward, const Vector pseudoup )
+{
+	QAngle outAngles;
+	VectorAngles( forward, pseudoup, outAngles );
+	return outAngles;
+}
+
 //-----------------------------------------------------------------------------
 static void ParseTable( CBaseEntity *pEntity, HSCRIPT spawn_table, const char *pKeyNameOverride = NULL )
 {
@@ -2522,6 +2536,9 @@ bool VScriptServerInit()
 
 				ScriptRegisterFunction( g_pScriptVM, RotatePosition, "Rotate a Vector around a point." );
 				ScriptRegisterFunction( g_pScriptVM, RotateOrientation, "Rotate a QAngle by another QAngle." );
+				ScriptRegisterFunctionNamed( g_pScriptVM, ScriptVectorAngles, "VectorAngles", "Create a QAngle from a direction vector, relative to the world." );
+				ScriptRegisterFunctionNamed( g_pScriptVM, ScriptVectorAnglesReference, "VectorAnglesReference", "Create a QAngle from a direction vector, relative to a provided vector." );
+
 				ScriptRegisterFunctionNamed( g_pScriptVM, Script_EmitSoundOn, "EmitSoundOn", "Play named sound on Entity. Legacy only, use EmitSoundEx." );
 				ScriptRegisterFunctionNamed( g_pScriptVM, Script_EmitSoundOnClient, "EmitSoundOnClient", "Play named sound only on the client for the passed in player. NOTE: This only supports soundscripts. Legacy only, use EmitSoundEx." );
 				ScriptRegisterFunctionNamed( g_pScriptVM, Script_EmitSoundEx, "EmitSoundEx", "Play a sound. Takes in a script table of params." );
