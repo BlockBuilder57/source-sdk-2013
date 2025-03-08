@@ -9803,7 +9803,7 @@ bool CTFGameRules::FPlayerCanTakeDamage( CBasePlayer *pPlayer, CBaseEntity *pAtt
 	}
 
 	// prevent eyeball rockets from hurting teammates if it's a spell
-	if ( info.GetDamageCustom() == TF_DMG_CUSTOM_SPELL_MONOCULUS && pAttacker->GetTeamNumber() == pPlayer->GetTeamNumber() )
+	if ( info.GetDamageCustom() == TF_DMG_CUSTOM_SPELL_MONOCULUS && pAttacker->GetTeamNumber() == pPlayer->GetTeamNumber() && !info.IsForceFriendlyFire() )
 	{
 		return false;
 	}
@@ -9819,6 +9819,22 @@ bool CTFGameRules::FPlayerCanTakeDamage( CBasePlayer *pPlayer, CBaseEntity *pAtt
 	}
 
 	return BaseClass::FPlayerCanTakeDamage( pPlayer, pAttacker, info );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int CTFGameRules::PlayerRelationship( CBaseEntity *pPlayer, CBaseEntity *pTarget )
+{
+	if ( !pPlayer || !pTarget )
+		return GR_NOTTEAMMATE;
+
+	// theoretically prevents FPlayerCanTakeDamage from ignoring projectiles
+	// unknown what other reprocussions this has, but keeping for now
+	if ( pPlayer->GetTeamNumber() == pTarget->GetTeamNumber() )
+		return GR_TEAMMATE;
+
+	return BaseClass::PlayerRelationship( pPlayer, pTarget );
 }
 
 Vector DropToGround( 

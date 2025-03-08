@@ -850,6 +850,7 @@ bool IsCreepWaveMode( void ) const;
 	void CheckTauntAchievement( CTFPlayer *pAchiever, int nGibs, int *pTauntCamAchievements );
 
 	virtual bool FPlayerCanTakeDamage( CBasePlayer *pPlayer, CBaseEntity *pAttacker, const CTakeDamageInfo &info );
+	virtual int PlayerRelationship( CBaseEntity *pPlayer, CBaseEntity *pTarget );
 
 	// Spawing rules.
 	CBaseEntity *GetPlayerSpawnSpot( CBasePlayer *pPlayer );
