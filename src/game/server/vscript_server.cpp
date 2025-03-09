@@ -1690,6 +1690,19 @@ static HSCRIPT Script_CreateFakeClient( const char* pszName = NULL, int iTeam = 
 
 	CBasePlayer* pBot = BotPutInServer( false, false, iTeam, iClass, pszName );
 	return ToHScript( pBot );
+#elif HL2MP
+	edict_t *pEdict = engine->CreateFakeClient(pszName);
+	if (!pEdict)
+	{
+		Msg( "Failed to create Bot.\n");
+		return NULL;
+	}
+
+	CHL2MP_Player *pPlayer = ((CHL2MP_Player *)CHL2MP_Player::Instance( pEdict ));
+	pPlayer->ClearFlags();
+	pPlayer->AddFlag( FL_CLIENT | FL_FAKECLIENT );
+
+	return ToHScript( pPlayer );
 #else
 	// Dummy implementation
 	/*edict_t *pEdict = engine->CreateFakeClient(pszName);
