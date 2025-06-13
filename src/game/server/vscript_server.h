@@ -72,6 +72,28 @@ public:
 	KeyValues *m_pKeyValues;	// actual KeyValue entity
 };
 
+// ----------------------------------------------------------------------------
+// Math functions
+// ----------------------------------------------------------------------------
+class CScriptMath
+{
+public:
+	const Vector &ScriptRotatePosition( const Vector rotateOrigin, const QAngle rotateAngles, const Vector position );
+	
+	// Float
+
+	// Vector
+	QAngle ScriptAngleVectors( const Vector forward );
+	QAngle ScriptAngleVectorsReference( const Vector forward, const Vector pseudoup );
+
+	// QAngle
+	QAngle ScriptVectorAngles( const Vector forward );
+	QAngle ScriptVectorAnglesReference( const Vector forward, const Vector pseudoup );
+	QAngle ScriptRotateOrientation( QAngle posAngles, QAngle entAngles );
+
+	// Quaternion
+};
+
 class CVScriptGameEventListener : public CGameEventListener
 {
 public:

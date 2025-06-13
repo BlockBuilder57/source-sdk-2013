@@ -996,7 +996,57 @@ CScriptKeyValues::~CScriptKeyValues( )
 	m_pKeyValues = NULL;
 }
 
+//-----------------------------------------------------------------------------
+// Math functions
+//-----------------------------------------------------------------------------
+CScriptMath g_ScriptMath;
 
+BEGIN_SCRIPTDESC_ROOT_NAMED( CScriptMath, "CScriptMath", SCRIPT_SINGLETON "Wrapper class for math functions" )
+	DEFINE_SCRIPT_CONSTRUCTOR()
+	DEFINE_SCRIPTFUNC_NAMED( ScriptRotatePosition, "RotatePosition", "Rotate a Vector around a point." );
+	DEFINE_SCRIPTFUNC_NAMED( ScriptRotateOrientation, "RotateOrientation", "Rotate a QAngle by another QAngle." );
+	DEFINE_SCRIPTFUNC_NAMED( ScriptVectorAngles, "VectorAngles", "Create a QAngle from a direction vector, relative to the world." );
+	DEFINE_SCRIPTFUNC_NAMED( ScriptVectorAnglesReference, "VectorAnglesReference", "Create a QAngle from a direction vector, relative to a provided vector." );
+END_SCRIPTDESC();
+
+const Vector &CScriptMath::ScriptRotatePosition( const Vector rotateOrigin, const QAngle rotateAngles, const Vector position )
+{
+	VMatrix rotationMatrix;
+	static Vector vecRotated;
+	rotationMatrix.SetupMatrixOrgAngles( rotateOrigin, rotateAngles );
+	vecRotated = rotationMatrix.ApplyRotation( position );
+	return vecRotated;
+}
+
+QAngle CScriptMath::ScriptRotateOrientation( QAngle posAngles, QAngle entAngles )
+{
+	matrix3x4_t posMat;
+	AngleMatrix( posAngles, posMat );
+
+	matrix3x4_t entMat;
+	AngleMatrix( entAngles, entMat );
+
+	matrix3x4_t outMat;
+	ConcatTransforms( posMat, entMat, outMat );
+
+	QAngle outAngles;
+	MatrixAngles( outMat, outAngles );
+	return outAngles;
+}
+
+QAngle CScriptMath::ScriptVectorAngles( const Vector forward )
+{
+	QAngle outAngles;
+	VectorAngles( forward, outAngles );
+	return outAngles;
+}
+
+QAngle CScriptMath::ScriptVectorAnglesReference( const Vector forward, const Vector pseudoup )
+{
+	QAngle outAngles;
+	VectorAngles( forward, pseudoup, outAngles );
+	return outAngles;
+}
 
 
 //-----------------------------------------------------------------------------
@@ -1184,43 +1234,15 @@ bool ScriptSendGlobalGameEvent( const char *szName, HSCRIPT params )
 	return true;
 }
 
+// compat for functions that have moved into the Math global
 const Vector &RotatePosition( const Vector rotateOrigin, const QAngle rotateAngles, const Vector position )
 {
-	VMatrix rotationMatrix;
-	static Vector vecRotated;
-	rotationMatrix.SetupMatrixOrgAngles( rotateOrigin, rotateAngles );
-	vecRotated = rotationMatrix.ApplyRotation( position );
-	return vecRotated;
+	return g_ScriptMath.ScriptRotatePosition( rotateOrigin, rotateAngles, position );
 }
 
 QAngle RotateOrientation( QAngle posAngles, QAngle entAngles )
 {
-	matrix3x4_t posMat;
-	AngleMatrix( posAngles, posMat );
-
-	matrix3x4_t entMat;
-	AngleMatrix( entAngles, entMat );
-
-	matrix3x4_t outMat;
-	ConcatTransforms( posMat, entMat, outMat );
-	
-	QAngle outAngles;
-	MatrixAngles( outMat, outAngles );
-	return outAngles;
-}
-
-QAngle ScriptVectorAngles( const Vector forward )
-{
-	QAngle outAngles;
-	VectorAngles( forward, outAngles );
-	return outAngles;
-}
-
-QAngle ScriptVectorAnglesReference( const Vector forward, const Vector pseudoup )
-{
-	QAngle outAngles;
-	VectorAngles( forward, pseudoup, outAngles );
-	return outAngles;
+	return g_ScriptMath.ScriptRotateOrientation( posAngles, entAngles );
 }
 
 //-----------------------------------------------------------------------------
@@ -2571,9 +2593,6 @@ bool VScriptServerInit()
 
 				ScriptRegisterFunction( g_pScriptVM, RotatePosition, "Rotate a Vector around a point." );
 				ScriptRegisterFunction( g_pScriptVM, RotateOrientation, "Rotate a QAngle by another QAngle." );
-				ScriptRegisterFunctionNamed( g_pScriptVM, ScriptVectorAngles, "VectorAngles", "Create a QAngle from a direction vector, relative to the world." );
-				ScriptRegisterFunctionNamed( g_pScriptVM, ScriptVectorAnglesReference, "VectorAnglesReference", "Create a QAngle from a direction vector, relative to a provided vector." );
-
 				ScriptRegisterFunctionNamed( g_pScriptVM, Script_EmitSoundOn, "EmitSoundOn", "Play named sound on Entity. Legacy only, use EmitSoundEx." );
 				ScriptRegisterFunctionNamed( g_pScriptVM, Script_EmitSoundOnClient, "EmitSoundOnClient", "Play named sound only on the client for the passed in player. NOTE: This only supports soundscripts. Legacy only, use EmitSoundEx." );
 				ScriptRegisterFunctionNamed( g_pScriptVM, Script_EmitSoundEx, "EmitSoundEx", "Play a sound. Takes in a script table of params." );
@@ -2681,6 +2700,7 @@ bool VScriptServerInit()
 				g_pScriptVM->RegisterInstance( &g_ScriptConvars, "Convars" ) ;
 				g_pScriptVM->RegisterInstance( &g_ScriptEntityOutputs, "EntityOutputs" );
 				g_pScriptVM->RegisterInstance( &g_ScriptNetPropManager, "NetProps" );
+				g_pScriptVM->RegisterInstance( &g_ScriptMath, "Math" );
 
 				ScriptVariant_t	vConstantsTable;
 				g_pScriptVM->CreateTable( vConstantsTable );

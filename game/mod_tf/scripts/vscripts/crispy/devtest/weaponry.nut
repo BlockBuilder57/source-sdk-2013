@@ -17,7 +17,7 @@ else
 {
 	local dir = target - src
 	dir.Norm()
-	local rot = VectorAngles(dir)
+	local rot = Math.VectorAngles(dir)
 
 	Weaponry.Mimic.SetAbsOrigin(src)
 	Weaponry.Mimic.SetAbsAngles(rot)
