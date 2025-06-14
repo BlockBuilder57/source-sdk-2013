@@ -44,9 +44,11 @@
 
 	//QuotaBots[0].ForceSetTeam(Constants.ETFTeam.TF_TEAM_RED)
 	QuotaBots[0].ForceSetClass(Constants.ETFClass.TF_CLASS_PYRO)
+	QuotaBots[0].Regenerate(true)
 
 	Weaponry.FireRocket(src, target + Vector(0, 0, 64), 0)
 
+	// rockets move at 1000ups
 	local time = (src - target + Vector(0, 0, 64) + (QuotaBots[0].EyeAngles().Forward() * -200)).Length() / 1000
 
 	local params = {
@@ -59,6 +61,25 @@
 	QuotaBots[0].GetScriptScope()["ThinkParams"] <- params
 	QuotaBots[0].GetScriptScope()["Think"] <- ff.DelayedFireThink
 	AddThinkToEnt(QuotaBots[0], "Think")
+}
+
+::ff.test3 <- function()
+{
+	QuotaFakeClients(1);
+
+	local src = Vector(1024, 1024, 64)
+	local target = Vector(1024, -384, 0)
+	local eyeangles = QAngle(0, 90, 0)
+
+	QuotaBots[0].SetAbsOrigin(target)
+	QuotaBots[0].SnapEyeAngles(eyeangles * -1)
+	QuotaBots[0].ValidateScriptScope()
+
+	QuotaBots[0].ForceSetTeam(Constants.ETFTeam.TF_TEAM_RED)
+	QuotaBots[0].ForceSetClass(Constants.ETFClass.TF_CLASS_HEAVYWEAPONS)
+	QuotaBots[0].Regenerate(true)
+
+	Weaponry.FireHitscan(src, target + Vector(0, 0, 64), Constants.ETFTeam.TF_TEAM_RED)
 }
 
 printl("Loaded friendly fire testing script")

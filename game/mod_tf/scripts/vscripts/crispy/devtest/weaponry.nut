@@ -31,4 +31,12 @@ else
 	Weaponry.Mimic.FireRocket()
 }
 
+::Weaponry.FireHitscan <- function(src, target, team = 0)
+{
+	PointMimicAtTarget(src, target)
+
+	Weaponry.Mimic.SetTeam(team)
+	Weaponry.Mimic.FireHitscan()
+}
+
 printl("Loaded weaponry")

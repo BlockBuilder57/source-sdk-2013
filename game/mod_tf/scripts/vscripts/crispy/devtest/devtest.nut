@@ -14,3 +14,5 @@ SendToServerConsole("mp_teams_unbalance_limit 0");
 SendToServerConsole("mp_waitingforplayers_cancel 1");
 // make sure we have a clean slate of bots
 SendToServerConsole("bot_kick all");
+// disable respawn timer for devtesting
+SendToServerConsole("mp_respawnwavetime -1");
