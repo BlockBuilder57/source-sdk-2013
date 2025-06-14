@@ -2,6 +2,13 @@
 
 #include "cbase.h"
 #include "tf_point_weapon_mimic.h"
+
+#ifdef GAME_DLL
+#include "ndebugoverlay.h"
+#endif
+
+#include "tf_gamerules.h"
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -28,21 +35,28 @@ BEGIN_DATADESC( CTFPointWeaponMimic )
 	DEFINE_KEYFIELD( m_flSplashRadius, FIELD_FLOAT, "SplashRadius" ),
 	DEFINE_KEYFIELD( m_flSpreadAngle, FIELD_FLOAT, "SpreadAngle" ),
 	DEFINE_KEYFIELD( m_bCrits, FIELD_BOOLEAN, "Crits" ),
+	DEFINE_KEYFIELD( m_flFireRate, FIELD_FLOAT, "FireRate" ),
+	DEFINE_KEYFIELD( m_nBurstSize, FIELD_INTEGER, "BurstSize" ),
 
 	DEFINE_INPUTFUNC( FIELD_VOID, "FireOnce", InputFireOnce ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "FireMultiple", InputFireMultiple ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "QueueMultiple", InputQueueMultiple ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "DetonateStickies", InputDetonateStickies ),
+
+	DEFINE_THINKFUNC( MimicThink ),
 
 END_DATADESC()
 
 BEGIN_ENT_SCRIPTDESC( CTFPointWeaponMimic, CBaseEntity , "TF Weapon Mimic" )
 	DEFINE_SCRIPTFUNC( Fire, "Fire the mimic weapon" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptFireMultiple, "FireMultiple", "Fire the mimic weapon" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptFireMultiple, "FireMultiple", "Fire the mimic weapon a number of times at once" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptQueueMultiple, "QueueMultiple", "Queue a number of fires of the mimic weapon" )
 
 	DEFINE_SCRIPTFUNC( FireRocket, "Fire a rocket" )
 	DEFINE_SCRIPTFUNC( FireGrenade, "Fire a grenade" )
 	DEFINE_SCRIPTFUNC( FireArrow, "Fire an arrow" )
 	DEFINE_SCRIPTFUNC( FireStickyGrenade, "Fire a stickybomb" )
+	DEFINE_SCRIPTFUNC( FireHitscan, "Fire a hitscan bullet" )
 
 	DEFINE_SCRIPTFUNC( DetonateStickies, "Detonate stickybombs" )
 
@@ -70,8 +84,70 @@ CTFPointWeaponMimic::CTFPointWeaponMimic()
 	m_flSplashRadius = 50.0f;
 	m_flSpreadAngle = 0.0f;
 	m_bCrits = false;
+	m_flFireRate = 0.5f;
+	m_nBurstSize = 1;
+	m_nBurstLeft = 0;
 #endif
+
+	SetThink( &CTFPointWeaponMimic::MimicThink );
+	SetNextThink( gpGlobals->curtime + 0.1f );
 }
+
+#ifdef GAME_DLL
+int CTFPointWeaponMimic::DrawDebugTextOverlays()
+{
+	int text_offset = BaseClass::DrawDebugTextOverlays();
+
+	if ( m_debugOverlays & OVERLAY_TEXT_BIT ) 
+	{
+		static const char *pszWeaponTypes[] =
+		{
+			"Rocket",
+			"Grenade",
+			"Arrow",
+			"Sticky Grenade",
+			"Hitscan",
+
+			"<UNKNOWN>",
+		};
+
+		char tempstr[255];
+
+		Q_snprintf( tempstr, sizeof(tempstr), "Team: %s (%d)", g_aTeamNames[ Clamp(GetTeamNumber(), 0, (int)TF_TEAM_COUNT) ], GetTeamNumber() );
+		EntityText( text_offset, tempstr, 0 );
+		text_offset++;
+
+		Q_snprintf( tempstr, sizeof(tempstr), "Weapon type: %s", pszWeaponTypes[ Clamp(m_nWeaponType.Get(), 0, (int)WEAPON_TYPES) ] );
+		EntityText( text_offset, tempstr, 0 );
+		text_offset++;
+
+		Q_snprintf( tempstr, sizeof(tempstr), "Until next fire: %.2f", GetNextThink() - gpGlobals->curtime );
+		EntityText( text_offset, tempstr, 0 );
+		text_offset++;
+
+		Q_snprintf( tempstr, sizeof(tempstr), "Burst: %d/%d", m_nBurstLeft, m_nBurstSize.Get());
+		EntityText( text_offset, tempstr, 0 );
+		text_offset++;
+	}
+
+	return text_offset;
+}
+
+void CTFPointWeaponMimic::DrawDebugGeometryOverlays()
+{
+	if ( m_debugOverlays & OVERLAY_TEXT_BIT )
+	{
+		Vector vForward, vUp;
+		AngleVectors( GetAbsAngles(), &vForward, NULL, &vUp);
+
+		NDebugOverlay::Axis( GetAbsOrigin(), GetAbsAngles(), 8.f, false, 0 );
+		NDebugOverlay::Circle( GetAbsOrigin(), GetAbsAngles(), 8.f, 255, 255, 255, 0, false, 0 );
+		NDebugOverlay::VertArrow( GetAbsOrigin(), GetAbsOrigin() + ( vForward * 16.f ), 2.f, 255, 255, 255, 0, false, 0);
+	}
+
+	BaseClass::DrawDebugGeometryOverlays();
+}
+#endif
 
 
 void CTFPointWeaponMimic::Spawn()
@@ -85,6 +161,20 @@ void CTFPointWeaponMimic::Spawn()
 	}
 #endif
 }
+
+void CTFPointWeaponMimic::MimicThink()
+{
+	SetNextThink( gpGlobals->curtime + m_flFireRate );
+
+#ifdef GAME_DLL
+	if ( m_nBurstLeft > 0 )
+	{
+		m_nBurstLeft--;
+		Fire();
+	}
+#endif
+}
+
 
 #ifdef GAME_DLL
 void CTFPointWeaponMimic::InputFireOnce( inputdata_t& inputdata )
@@ -100,6 +190,16 @@ void CTFPointWeaponMimic::InputFireMultiple( inputdata_t& inputdata )
 	{
 		Fire();
 	}
+}
+
+void CTFPointWeaponMimic::InputQueueMultiple( inputdata_t& inputdata )
+{
+	if ( inputdata.value.FieldType() == FIELD_INTEGER && inputdata.value.Int() >= 0 )
+	{
+		m_nBurstSize = Max( 1, abs(inputdata.value.Int()) );
+	}
+	
+	m_nBurstLeft = m_nBurstSize;
 }
 
 void CTFPointWeaponMimic::InputDetonateStickies( inputdata_t &inputdata )
@@ -138,6 +238,16 @@ void CTFPointWeaponMimic::ScriptFireMultiple( int times /* = 1 */ )
 	}
 }
 
+void CTFPointWeaponMimic::ScriptQueueMultiple( int times /* = 1 */ )
+{
+	if ( time >= 0 )
+	{
+		m_nBurstSize = Max( 1, abs(times) );
+	}
+	
+	m_nBurstLeft = m_nBurstSize;
+}
+
 
 void CTFPointWeaponMimic::Fire()
 {
@@ -156,6 +266,9 @@ void CTFPointWeaponMimic::Fire()
 		break;
 	case WEAPON_STICKY_GRENADE:
 		FireStickyGrenade();
+		break;
+	case WEAPON_HITSCAN:
+		FireHitscan();
 		break;
 	}
 }
@@ -271,6 +384,27 @@ void CTFPointWeaponMimic::FireStickyGrenade()
 	}
 }
 
+void CTFPointWeaponMimic::FireHitscan()
+{
+	FireBulletsInfo_t info;
+
+	info.m_vecSrc = GetAbsOrigin();
+	AngleVectors(GetFiringAngles(), &info.m_vecDirShooting);
+	info.m_iTracerFreq = 1;
+	info.m_iShots = 1;
+	info.m_iAmmoType = TF_AMMO_PRIMARY;
+	info.m_pAttacker = this;
+	info.m_vecSpread = vec3_origin; // handled by GetFiringAngles
+	info.m_flDistance = MAX_TRACE_LENGTH;
+	info.m_flDamage = m_flDamage;
+	info.m_flDamageForceScale = 0.0f;
+	info.m_nFlags = FIRE_BULLETS_FIRST_SHOT_ACCURATE | FIRE_BULLETS_ALLOW_WATER_SURFACE_IMPACTS;
+
+	FireBullets( info );
+
+	//MakeTracer();
+}
+
 QAngle CTFPointWeaponMimic::GetFiringAngles() const
 {
 	// No spread?  Straight along our angles, then
@@ -301,6 +435,11 @@ QAngle CTFPointWeaponMimic::GetFiringAngles() const
 float CTFPointWeaponMimic::GetSpeed() const
 {
 	return RandomFloat( m_flSpeedMin, m_flSpeedMax );
+}
+
+void CTFPointWeaponMimic::ModifyFireBulletsDamage( CTakeDamageInfo *dmgInfo )
+{
+	dmgInfo->SetCritType( m_bCrits ? CTakeDamageInfo::ECritType::CRIT_FULL : CTakeDamageInfo::ECritType::CRIT_NONE );
 }
 
 #endif 
