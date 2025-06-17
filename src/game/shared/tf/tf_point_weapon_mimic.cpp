@@ -5,6 +5,7 @@
 
 #ifdef GAME_DLL
 #include "ndebugoverlay.h"
+#include "tf_fx.h"
 #endif
 
 #include "tf_gamerules.h"
@@ -24,6 +25,7 @@ END_NETWORK_TABLE()
 BEGIN_DATADESC( CTFPointWeaponMimic )
 
 	// Keyfields
+	DEFINE_KEYFIELD( m_nTeamNumber, FIELD_INTEGER, "team_number" ), // we cannot tell if teamnum was there initially, and we don't want to break maps
 	DEFINE_KEYFIELD( m_nWeaponType, FIELD_INTEGER, "WeaponType" ),
 	DEFINE_KEYFIELD( m_pzsFireSound, FIELD_SOUNDNAME, "FireSound" ),
 	DEFINE_KEYFIELD( m_pzsFireParticles, FIELD_STRING, "ParticleEffect" ),
@@ -74,10 +76,11 @@ CTFPointWeaponMimic::CTFPointWeaponMimic()
 {
 	// This entity was designed for MvM, and was hardcoded to fire blue projectiles
 	// To avoid breaking old maps, let's act as blue by default
-	// The keyfield should (intentionally) clobber this later, if it exists.
+	// This should (intentionally) be clobbered later, if the keyfield exists.
 	ChangeTeam( TF_TEAM_BLUE );
 
 #ifdef GAME_DLL
+	m_nTeamNumber = TEAM_INVALID;
 	m_flModelScale = 1.0f;
 	m_flSpeedMin = m_flSpeedMax = 1000.0f;
 	m_flDamage = 75.0f;
@@ -87,10 +90,10 @@ CTFPointWeaponMimic::CTFPointWeaponMimic()
 	m_flFireRate = 0.5f;
 	m_nBurstSize = 1;
 	m_nBurstLeft = 0;
-#endif
 
 	SetThink( &CTFPointWeaponMimic::MimicThink );
 	SetNextThink( gpGlobals->curtime + 0.1f );
+#endif
 }
 
 #ifdef GAME_DLL
@@ -121,11 +124,14 @@ int CTFPointWeaponMimic::DrawDebugTextOverlays()
 		EntityText( text_offset, tempstr, 0 );
 		text_offset++;
 
-		Q_snprintf( tempstr, sizeof(tempstr), "Until next fire: %.2f", GetNextThink() - gpGlobals->curtime );
+		if ( m_nBurstLeft )
+			Q_snprintf( tempstr, sizeof(tempstr), "Fire speed: %.2f/%.2f", GetNextThink() - gpGlobals->curtime, m_flFireRate.Get() );
+		else
+			Q_snprintf( tempstr, sizeof(tempstr), "Fire speed: %.2f", m_flFireRate.Get() );
 		EntityText( text_offset, tempstr, 0 );
 		text_offset++;
 
-		Q_snprintf( tempstr, sizeof(tempstr), "Burst: %d/%d", m_nBurstLeft, m_nBurstSize.Get());
+		Q_snprintf( tempstr, sizeof(tempstr), "Burst: %d/%d", m_nBurstLeft, m_nBurstSize.Get() );
 		EntityText( text_offset, tempstr, 0 );
 		text_offset++;
 	}
@@ -154,29 +160,64 @@ void CTFPointWeaponMimic::Spawn()
 {
 	BaseClass::Spawn();
 
+	// Compatibility: To ensure the team keyvalue is actually read, it's set to -1 in the ctor. (default of 0 in the FGD)
+	// So long as we have a value other than that, we can change the team here
+	if ( m_nTeamNumber != TEAM_INVALID )
+	{
+		ChangeTeam( m_nTeamNumber );
+	}
+}
+
+void CTFPointWeaponMimic::Precache()
+{
 #ifdef GAME_DLL
 	if( m_pzsModelOverride )
 	{
 		PrecacheModel( m_pzsModelOverride );
 	}
+
+	if ( m_pzsFireSound )
+	{
+		PrecacheScriptSound( m_pzsFireSound );
+	}
+
+	if ( m_pzsFireParticles )
+	{
+		PrecacheParticleSystem( m_pzsFireParticles );
+	}
 #endif
+
+	BaseClass::Precache();
 }
 
+
+#ifdef GAME_DLL
 void CTFPointWeaponMimic::MimicThink()
 {
 	SetNextThink( gpGlobals->curtime + m_flFireRate );
 
-#ifdef GAME_DLL
 	if ( m_nBurstLeft > 0 )
 	{
 		m_nBurstLeft--;
 		Fire();
 	}
-#endif
+}
+
+void CTFPointWeaponMimic::DoFireEffects()
+{
+	if ( m_pzsFireSound )
+	{
+		EmitSound( m_pzsFireSound );
+	}
+
+	if ( m_pzsFireParticles )
+	{
+		CPVSFilter pvsfilter( GetAbsOrigin() );
+		TE_TFParticleEffect( pvsfilter, 0.f, m_pzsFireParticles, GetAbsOrigin(), vec3_angle );
+	}
 }
 
 
-#ifdef GAME_DLL
 void CTFPointWeaponMimic::InputFireOnce( inputdata_t& inputdata )
 {
 	Fire();
@@ -284,12 +325,15 @@ void CTFPointWeaponMimic::FireRocket()
 			pProjectile->SetModel( m_pzsModelOverride );
 		}
 
+		pProjectile->ChangeTeam( GetTeamNumber() );
 		pProjectile->SetCritical( m_bCrits );
 		pProjectile->SetDamage( m_flDamage );
 		Vector vVelocity = pProjectile->GetAbsVelocity().Normalized() * GetSpeed();
 		pProjectile->SetAbsVelocity( vVelocity );	
 		pProjectile->SetupInitialTransmittedGrenadeVelocity( vVelocity );
 		pProjectile->SetCollisionGroup( TFCOLLISION_GROUP_ROCKET_BUT_NOT_WITH_OTHER_ROCKETS );
+
+		DoFireEffects();
 	}
 }
 
@@ -309,6 +353,8 @@ void CTFPointWeaponMimic::FireGrenade()
 			pGrenade->SetModel( m_pzsModelOverride );
 		}
 		pGrenade->InitGrenade( vVelocity, AngularImpulse( 600, random->RandomInt( -1200, 1200 ), 0 ), NULL, m_flDamage, m_flSplashRadius );
+		pGrenade->ChangeTeam( GetTeamNumber() );
+		pGrenade->SetSkin( ( GetTeamNumber() == TF_TEAM_BLUE ) ? 1 : 0 );
 		pGrenade->SetDetonateTimerLength( 2.f );
 		pGrenade->SetModelScale( m_flModelScale );
 		pGrenade->SetCollisionGroup( TFCOLLISION_GROUP_ROCKETS );  // we want to use collision_group_rockets so we don't ever collide with players
@@ -319,6 +365,8 @@ void CTFPointWeaponMimic::FireGrenade()
 		vVelocity = pGrenade->GetAbsVelocity().Normalized() * GetSpeed();
 		pGrenade->SetAbsVelocity( vVelocity );	
 		pGrenade->SetupInitialTransmittedGrenadeVelocity( vVelocity );
+
+		DoFireEffects();
 	}
 }
 
@@ -336,9 +384,11 @@ void CTFPointWeaponMimic::FireArrow()
 		pProjectile->SetCritical( m_bCrits );
 		pProjectile->SetDamage( m_flDamage );
 		Vector vVelocity = pProjectile->GetAbsVelocity().Normalized() * GetSpeed();
-		pProjectile->SetAbsVelocity( vVelocity );	
+		pProjectile->SetAbsVelocity( vVelocity );
 		pProjectile->SetupInitialTransmittedGrenadeVelocity( vVelocity );
 		pProjectile->SetCollisionGroup( TFCOLLISION_GROUP_ROCKET_BUT_NOT_WITH_OTHER_ROCKETS );
+
+		DoFireEffects();
 	}
 }
 
@@ -369,6 +419,8 @@ void CTFPointWeaponMimic::FireStickyGrenade()
 		}
 
 		pGrenade->InitGrenade( vVelocity, AngularImpulse( 600, random->RandomInt( -1200, 1200 ), 0 ), NULL, m_flDamage, m_flSplashRadius );
+		pGrenade->ChangeTeam( GetTeamNumber() );
+		pGrenade->SetSkin( ( GetTeamNumber() == TF_TEAM_BLUE ) ? 1 : 0 );
 		vVelocity = pGrenade->GetAbsVelocity().Normalized() * GetSpeed();
 		pGrenade->SetAbsVelocity( vVelocity );	
 		pGrenade->SetupInitialTransmittedGrenadeVelocity( vVelocity );
@@ -377,10 +429,10 @@ void CTFPointWeaponMimic::FireStickyGrenade()
 		pGrenade->SetFullDamage( m_flDamage );
 		pGrenade->SetDamageRadius( m_flSplashRadius );
 		pGrenade->SetCritical( m_bCrits );
-		pGrenade->ChangeTeam( GetTeamNumber() );
-		pGrenade->m_nSkin = 1;
 
 		m_Pipebombs.AddToTail( pGrenade );
+
+		DoFireEffects();
 	}
 }
 
@@ -402,7 +454,7 @@ void CTFPointWeaponMimic::FireHitscan()
 
 	FireBullets( info );
 
-	//MakeTracer();
+	DoFireEffects();
 }
 
 QAngle CTFPointWeaponMimic::GetFiringAngles() const

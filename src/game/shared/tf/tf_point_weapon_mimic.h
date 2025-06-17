@@ -26,17 +26,17 @@ public:
 	~CTFPointWeaponMimic() {}
 
 	virtual void	Spawn( void );
-
-#ifdef GAME_DLL
-	int DrawDebugTextOverlays( void );
-	void DrawDebugGeometryOverlays( void );
-#endif
-
-	void MimicThink();
+	virtual void	Precache( void );
 
 #ifdef GAME_DLL
 	DECLARE_DATADESC();
 	DECLARE_ENT_SCRIPTDESC();
+
+	int DrawDebugTextOverlays( void );
+	void DrawDebugGeometryOverlays( void );
+
+	void MimicThink();
+	void DoFireEffects();
 
 	void InputFireOnce( inputdata_t& inputdata );
 	void InputFireMultiple( inputdata_t& inputdata );
@@ -97,6 +97,7 @@ private:
 	CUtlVector<PipebombHandle>		m_Pipebombs;
 #endif
 
+	CNetworkVar( int, m_nTeamNumber );
 	CNetworkVar( int, m_nWeaponType );
 	CNetworkVar( float, m_flModelScale );
 	CNetworkVar( float, m_flSpeedMin );

@@ -2,7 +2,7 @@ versioninfo
 {
 	"editorversion" "400"
 	"editorbuild" "8869"
-	"mapversion" "75"
+	"mapversion" "84"
 	"formatversion" "100"
 	"prefab" "0"
 }
@@ -119,7 +119,7 @@ bgimages_plus
 world
 {
 	"id" "1"
-	"mapversion" "75"
+	"mapversion" "84"
 	"classname" "worldspawn"
 	"detailmaterial" "detail/detailsprites"
 	"detailvbsp" "detail.vbsp"
@@ -18120,12 +18120,15 @@ entity
 	"classname" "tf_point_weapon_mimic"
 	"angles" "0 180 0"
 	"Damage" "75"
+	"FireSound" "taunt.single_bell"
 	"ModelScale" "1"
+	"ParticleEffect" "muzzle_pipelauncher"
 	"SpeedMax" "600"
 	"SpeedMin" "400"
 	"SplashRadius" "50"
 	"targetname" "weapon_mimic_rocketlauncher_red"
-	"teamnum" "2"
+	"team_number" "2"
+	"WeaponType" "1"
 	"origin" "1472.01 1152 120"
 	editor
 	{
@@ -18294,12 +18297,15 @@ entity
 	"classname" "tf_point_weapon_mimic"
 	"angles" "0 180 0"
 	"Damage" "75"
+	"FireSound" "taunt.single_bell"
 	"ModelScale" "1"
+	"ParticleEffect" "muzzle_pipelauncher"
 	"SpeedMax" "600"
 	"SpeedMin" "400"
 	"SplashRadius" "50"
 	"targetname" "weapon_mimic_rocketlauncher_blue"
-	"teamnum" "3"
+	"team_number" "3"
+	"WeaponType" "1"
 	"origin" "1472 1088 120"
 	editor
 	{
@@ -18620,12 +18626,14 @@ entity
 	"classname" "tf_point_weapon_mimic"
 	"angles" "0 180 0"
 	"Damage" "75"
+	"FireSound" "taunt.single_bell"
 	"ModelScale" "1"
+	"ParticleEffect" "muzzle_pipelauncher"
 	"SpeedMax" "600"
 	"SpeedMin" "400"
 	"SplashRadius" "50"
 	"targetname" "weapon_mimic_rocketlauncher_any"
-	"teamnum" "0"
+	"WeaponType" "1"
 	"origin" "1472.01 1216 120"
 	editor
 	{
