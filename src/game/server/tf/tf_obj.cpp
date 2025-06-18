@@ -154,6 +154,41 @@ BEGIN_DATADESC( CBaseObject )
 	DEFINE_OUTPUT( m_OnObjectHealthChanged, "OnObjectHealthChanged" )
 END_DATADESC()
 
+BEGIN_ENT_SCRIPTDESC( CBaseObject, CBaseCombatCharacter, "TF Object" )
+	DEFINE_SCRIPTFUNC( IsBuilding, "Is the object still building?" )
+	DEFINE_SCRIPTFUNC( IsPlacing, "Is the object being placed?" )
+	DEFINE_SCRIPTFUNC( IsUpgrading, "Is the object transitioning between upgrades?" )
+	DEFINE_SCRIPTFUNC( IsCarried, "Is the object being carried" )
+	DEFINE_SCRIPTFUNC( IsMiniBuilding, "Is this a mini building?" )
+	DEFINE_SCRIPTFUNC( IsDisposableBuilding, "Is this a disposable building?" )
+	DEFINE_SCRIPTFUNC( IsMapPlaced, "Was this object placed in the map?" )
+
+	DEFINE_SCRIPTFUNC( GetUpgradeLevel, "Current upgrade leve" )
+	DEFINE_SCRIPTFUNC( GetMaxUpgradeLevel, "Maximum upgrade level" )
+	DEFINE_SCRIPTFUNC( GetUpgradeMetal, "How much metal needed for next upgrade" )
+	DEFINE_SCRIPTFUNC( GetBaseHealth, "The base health for level 1 of this object" )
+
+	DEFINE_SCRIPTFUNC_NAMED( StartUpgrading, "IncreaseUpgradeLevel", "Upgrade to the next level" )
+	DEFINE_SCRIPTFUNC( DoQuickBuild, "Instantly complete upgrades" )
+
+	DEFINE_SCRIPTFUNC( GetBuilder, "Get the builder of this object" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSetBuilder, "SetBuilder", "Set the builder of this object" )
+
+	DEFINE_SCRIPTFUNC( ChangeTeam, "Change the team of this object. Use this instead of SetTeam." )
+
+	DEFINE_SCRIPTFUNC( SetHealth, "Sets the health of the object." )
+	DEFINE_SCRIPTFUNC( GetHealth, "Gets the health of the object." )
+
+	DEFINE_SCRIPTFUNC_NAMED( ScriptRegenerate, "Regenerate", "Regenerates the object. (Refills ammo on sentires, metal on dispensers, etc.)" )
+
+	DEFINE_SCRIPTFUNC( DetonateObject, "Detonates the object." )
+
+	DEFINE_SCRIPTFUNC( CannotDie, "Can this building die?" )
+	DEFINE_SCRIPTFUNC( SetCannotDie, "Sets if the building can die." )
+
+	DEFINE_SCRIPTFUNC( GetSapper, "Gets the current sapper on the object." )
+END_SCRIPTDESC();
+
 
 IMPLEMENT_SERVERCLASS_ST(CBaseObject, DT_BaseObject)
 	SendPropInt(SENDINFO(m_iHealth), -1, SPROP_VARINT ),
@@ -787,7 +822,26 @@ void CBaseObject::SetBuilder( CTFPlayer *pBuilder )
 	TRACE_OBJECT( UTIL_VarArgs( "%0.2f CBaseObject::SetBuilder builder %s\n", gpGlobals->curtime, 
 		pBuilder ? pBuilder->GetPlayerName() : "NULL" ) );
 
+	CTFPlayer* oldBuilder = GetBuilder();
+
+	// We check for FL_OBJECT to see if Spawn() has already run - i.e., if this building was already built
+
+	if ( GetFlags() & FL_OBJECT && oldBuilder != NULL && oldBuilder != pBuilder )
+	{
+		ChangeTeam( oldBuilder->GetTeamNumber() );
+		oldBuilder->RemoveObject( this );
+	}
+
 	m_hBuilder = pBuilder;
+
+	// Fragile code warning: oldBuilder needs to be checked here so we don't immediately remove and then add back an object
+	// This can cause issues with buildings before they are built
+	// It is okay if oldBuilder was null here, because then we don't try to run this block of code
+	if ( GetFlags() & FL_OBJECT && pBuilder != NULL && oldBuilder != pBuilder )
+	{
+		ChangeTeam( pBuilder->GetTeamNumber() );
+		pBuilder->AddObject( this );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -2710,12 +2764,7 @@ void CBaseObject::InputSetSolidToPlayer( inputdata_t &inputdata )
 void CBaseObject::InputSetBuilder( inputdata_t &inputdata )
 {
 	CTFPlayer *pPlayer = ToTFPlayer( inputdata.pActivator );
-	if ( GetBuilder() == NULL && pPlayer != NULL )
-	{
-		SetBuilder( pPlayer );
-		ChangeTeam( pPlayer->GetTeamNumber() );
-		pPlayer->AddObject( this );
-	}
+	SetBuilder( pPlayer );
 }
 
 //-----------------------------------------------------------------------------
@@ -3800,6 +3849,24 @@ void CBaseObject::InputDisable( inputdata_t &inputdata )
 		SetDisabled( true );
 		OnGoInactive();
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Sets the builder
+//-----------------------------------------------------------------------------
+void CBaseObject::ScriptSetBuilder( HSCRIPT hBuilder )
+{
+	if ( hBuilder == NULL )
+	{
+		SetBuilder( NULL );
+		return;
+	}
+
+	CTFPlayer *pPlayer = ScriptToEntClass<CTFPlayer>( hBuilder );
+	if ( !pPlayer )
+		return;
+
+	SetBuilder( pPlayer );
 }
 
 //-----------------------------------------------------------------------------

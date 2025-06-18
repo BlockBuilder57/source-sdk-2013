@@ -34,6 +34,7 @@ class CObjectTeleporter : public CBaseObject, public CGameEventListener
 
 public:
 	DECLARE_SERVERCLASS();
+	DECLARE_ENT_SCRIPTDESC();
 
 	CObjectTeleporter();
 
@@ -67,6 +68,7 @@ public:
 	virtual void FinishUpgrading( void );
 
 	CObjectTeleporter *GetMatchingTeleporter( void );
+	void SetMatchingTeleporter( CObjectTeleporter *pTele );
 	CObjectTeleporter *FindMatch( void );	// Find the teleport partner to this object
 
 	bool IsReady( void );					// is this teleporter connected and functional? (ie: not sapped, disabled, upgrading, unconnected, etc)
@@ -79,6 +81,11 @@ public:
 	{
 		m_hTeleportingPlayer = pPlayer;
 	}
+
+	// VScript functions
+	void ScriptSetMatchingTeleporter( HSCRIPT hTele );
+	HSCRIPT ScriptGetMatchingTeleporter( void );
+	void ScriptTeleporterSend( HSCRIPT hPlayer );
 
 	// Wrench hits
 	virtual int		Command_Repair( CTFPlayer *pActivator, float flAmount, float flRepairMod, float flRepairToMetalRatio = 3.f, bool bSendEvent = true ) OVERRIDE;

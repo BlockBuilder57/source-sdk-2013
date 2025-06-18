@@ -79,6 +79,7 @@ public:
 
 	DECLARE_SERVERCLASS();
 	DECLARE_DATADESC();
+	DECLARE_ENT_SCRIPTDESC();
 
 	virtual bool	IsBaseObject( void ) const { return true; }
 
@@ -179,6 +180,10 @@ public:
 	void			InputHide( inputdata_t &inputdata );
 	virtual void	InputEnable( inputdata_t &inputdata );
 	virtual void	InputDisable( inputdata_t &inputdata );
+
+	// VScript functions
+	void			ScriptSetBuilder( HSCRIPT hBuilder );
+	virtual void	ScriptRegenerate( void ) {}
 
 	// Wrench hits
 	virtual bool	InputWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vector hitLoc );

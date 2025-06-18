@@ -64,6 +64,17 @@ BEGIN_DATADESC( CObjectTeleporter )
 	DEFINE_ENTITYFUNC( TeleporterTouch ),
 END_DATADESC()
 
+BEGIN_ENT_SCRIPTDESC( CObjectTeleporter, CBaseObject, "TF Teleporter" )
+	DEFINE_SCRIPTFUNC( IsReady, "Are we ready for teleporting?" )
+	DEFINE_SCRIPTFUNC( IsMatchingTeleporterReady, "Is our matching teleporter ready?" )
+	DEFINE_SCRIPTFUNC( IsEntrance, "Is this teleporter an entrance?" )
+	DEFINE_SCRIPTFUNC( IsExit, "Is this teleporter an exit?" )
+
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSetMatchingTeleporter, "SetMatchingTeleporter", "Sets the matching teleporter for this teleporter." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetMatchingTeleporter, "GetMatchingTeleporter", "Gets the matching teleporter for this teleporter." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptTeleporterSend, "TeleporterSend", "Forcibly sends a player through this teleporter." )
+END_SCRIPTDESC()
+
 PRECACHE_REGISTER( obj_teleporter );
 
 #define TELEPORTER_THINK_CONTEXT				"TeleporterContext"
@@ -740,6 +751,7 @@ bool CObjectTeleporter::IsMatchingTeleporterReady( void )
 	}
 
 	if ( m_hMatchingTeleporter &&
+		m_hMatchingTeleporter->GetMatchingTeleporter() == this &&
 		m_hMatchingTeleporter->GetState() != TELEPORTER_STATE_BUILDING && 
 		!m_hMatchingTeleporter->IsUpgrading() &&
 		!m_hMatchingTeleporter->IsDisabled() )
@@ -801,6 +813,48 @@ void CObjectTeleporter::CopyUpgradeStateToMatch( CObjectTeleporter *pMatch, bool
 CObjectTeleporter *CObjectTeleporter::GetMatchingTeleporter( void )
 {
 	return m_hMatchingTeleporter.Get();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Manually sets the matching teleporter (for scripts)
+//-----------------------------------------------------------------------------
+void CObjectTeleporter::SetMatchingTeleporter( CObjectTeleporter *pTele )
+{
+	CObjectTeleporter *pMatch = GetMatchingTeleporter();
+	if ( pMatch )
+	{
+		if ( pMatch->GetTeleportingPlayer() )
+		{
+			pMatch->GetTeleportingPlayer()->m_Shared.RemoveCond( TF_COND_SELECTED_TO_TELEPORT );
+		}
+		pMatch->SetTeleportingPlayer( NULL );
+	}
+
+	if ( m_hTeleportingPlayer.Get() )
+	{
+		m_hTeleportingPlayer.Get()->m_Shared.RemoveCond( TF_COND_SELECTED_TO_TELEPORT );
+	}
+	SetTeleportingPlayer( NULL );
+
+	if ( pTele == NULL )
+	{
+		m_hMatchingTeleporter = NULL;
+		return;
+	}
+	else if ( pTele->GetType() != GetType() ||
+		!( ( IsEntrance() && pTele->IsExit() ) || ( IsExit() && pTele->IsEntrance() ) ) )
+	{
+		return;
+	}
+
+	m_hMatchingTeleporter = pTele;
+
+	// force direction arrow to change. necessary if we already has a matching teleporter
+	ShowDirectionArrow( false );
+
+	// Select the teleporter with the most upgrade
+	bool bFrom = (pTele->GetUpgradeLevel() > GetUpgradeLevel() || pTele->GetUpgradeMetal() > GetUpgradeMetal() );
+	CopyUpgradeStateToMatch( pTele, bFrom );
 }
 
 void CObjectTeleporter::DeterminePlaybackRate( void )
@@ -1248,7 +1302,14 @@ int CObjectTeleporter::DrawDebugTextOverlays(void)
 		char tempstr[512];
 
 		// match
-		Q_snprintf( tempstr, sizeof( tempstr ), "Match Found: %s", ( pMatch != NULL ) ? "Yes" : "No" );
+		if ( pMatch != NULL )
+		{
+			Q_snprintf( tempstr, sizeof( tempstr ), "Match Found: Yes - %d", pMatch->entindex() );
+		}
+		else
+		{
+			Q_snprintf( tempstr, sizeof( tempstr ), "Match Found: No" );
+		}
 		EntityText(text_offset,tempstr,0);
 		text_offset++;
 
@@ -1449,6 +1510,38 @@ void CObjectTeleporter::InputDisable( inputdata_t &inputdata )
  		m_hMatchingTeleporter->SetDisabled( true );
  		m_hMatchingTeleporter->OnGoInactive();
  	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CObjectTeleporter::ScriptSetMatchingTeleporter( HSCRIPT hTele )
+{
+	CObjectTeleporter *pTele = ScriptToEntClass<CObjectTeleporter>( hTele );
+	if ( !pTele )
+		return;
+
+	SetMatchingTeleporter( pTele );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+HSCRIPT CObjectTeleporter::ScriptGetMatchingTeleporter( void )
+{
+	return ToHScript( m_hMatchingTeleporter.Get() );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CObjectTeleporter::ScriptTeleporterSend( HSCRIPT hPlayer )
+{
+	CTFPlayer *pPlayer = ScriptToEntClass<CTFPlayer>( hPlayer );
+	if ( !pPlayer )
+		return;
+
+	TeleporterSend( pPlayer );
 }
 
 void CObjectTeleporter::SpawnBread( const CTFPlayer* pTeleportingPlayer )

@@ -153,6 +153,8 @@ public:
 
 	Vector GetHealOrigin( void );
 
+	virtual void	ScriptRegenerate( void ) OVERRIDE;
+
 	CUtlVector< EHANDLE >	m_hHealingTargets;
 
 	virtual void	MakeMiniBuilding( CTFPlayer* pPlayer ) OVERRIDE;
