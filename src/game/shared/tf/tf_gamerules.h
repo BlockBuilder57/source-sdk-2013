@@ -852,6 +852,8 @@ bool IsCreepWaveMode( void ) const;
 	virtual bool FPlayerCanTakeDamage( CBasePlayer *pPlayer, CBaseEntity *pAttacker, const CTakeDamageInfo &info );
 	virtual int PlayerRelationship( CBaseEntity *pPlayer, CBaseEntity *pTarget );
 
+	bool CheckFriendlyFire( bool bCheck, ConVar* pExtraCheck = NULL, int iExtraCheckVal = INT_MIN );
+
 	// Spawing rules.
 	CBaseEntity *GetPlayerSpawnSpot( CBasePlayer *pPlayer );
 	bool IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, bool bIgnorePlayers, PlayerTeamSpawnMode_t nSpawndMode = PlayerTeamSpawnMode_Normal );

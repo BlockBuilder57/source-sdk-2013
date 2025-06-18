@@ -37,6 +37,7 @@
 #include "NextBot/NextBotLocomotionInterface.h"
 #include "bot/tf_bot.h"
 #include "tf/tf_bot_temp.h"
+#include "crispy/crispy_util.h"
 #endif
 
 #if defined( _WIN32 ) || defined( POSIX )
@@ -656,6 +657,16 @@ public:
 		return NULL;
 	}
 
+	HSCRIPT FindPlayerByCommandArg( const char *arg )
+	{
+		CUtlVector<CBasePlayer*> targets;
+		UTIL_PlayersByCommandArg<CBasePlayer*>(targets, arg);
+		if ( targets.Size() == 0 )
+			return NULL;
+
+		return ToHScript( targets[0] );
+	}
+
 private:
 } g_ScriptEntityIterator;
 
@@ -673,6 +684,7 @@ BEGIN_SCRIPTDESC_ROOT_NAMED( CScriptEntityIterator, "CEntities", SCRIPT_SINGLETO
 	DEFINE_SCRIPTFUNC( FindByClassnameNearest, "Find entities by class name nearest to a point."  )
 	DEFINE_SCRIPTFUNC( FindByClassnameWithin, "Find entities by class name within a radius. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search"  )
 	DEFINE_SCRIPTFUNC( DispatchSpawn, "Dispatches spawn of an entity!" )
+	DEFINE_SCRIPTFUNC_NAMED( FindPlayerByCommandArg, "FindPlayerByArgs", "Gets a player by certain arguments." );
 END_SCRIPTDESC();
 
 CVScriptGameEventListener g_VScriptGameEventListener;

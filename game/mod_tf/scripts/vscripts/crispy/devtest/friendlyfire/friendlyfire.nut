@@ -82,4 +82,8 @@
 	Weaponry.FireHitscan(src, target + Vector(0, 0, 64), Constants.ETFTeam.TF_TEAM_RED)
 }
 
-printl("Loaded friendly fire testing script")
+IncludeScript("crispy/devtest/friendlyfire/tf_obj_teleporter.nut")
+IncludeScript("crispy/devtest/friendlyfire/tf_obj_sentrygun.nut")
+
+SendToServerConsole("mp_friendlyfire 1");
+printl("Loaded friendly fire testing script");

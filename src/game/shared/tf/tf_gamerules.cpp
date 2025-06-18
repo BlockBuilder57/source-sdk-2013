@@ -9843,6 +9843,27 @@ int CTFGameRules::PlayerRelationship( CBaseEntity *pPlayer, CBaseEntity *pTarget
 	return BaseClass::PlayerRelationship( pPlayer, pTarget );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFGameRules::CheckFriendlyFire( bool bCheck, ConVar* pExtraCheck /* = NULL */, int iExtraCheckVal /* = INT_MIN */ )
+{
+	bool shouldAllow = bCheck;
+
+	if ( friendlyfire.GetBool() )
+	{
+		if ( pExtraCheck )
+		{
+			if ( iExtraCheckVal != INT_MIN )
+				shouldAllow = shouldAllow || pExtraCheck->GetInt() == iExtraCheckVal;
+			else
+				shouldAllow = shouldAllow || pExtraCheck->GetBool();
+		}
+	}
+
+	return shouldAllow;
+}
+
 Vector DropToGround( 
 	CBaseEntity *pMainEnt,
 	const Vector &vPos, 

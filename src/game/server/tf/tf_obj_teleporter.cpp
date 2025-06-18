@@ -93,6 +93,8 @@ PRECACHE_REGISTER( obj_teleporter );
 ConVar tf_teleporter_fov_start( "tf_teleporter_fov_start", "120", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Starting FOV for teleporter zoom.", true, 1, false, 0 );
 ConVar tf_teleporter_fov_time( "tf_teleporter_fov_time", "0.5", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "How quickly to restore FOV after teleport.", true, 0.0, false, 0 );
 
+ConVar tf_teleporter_telefrag_teammates( "tf_teleporter_telefrag_teammates", "0", FCVAR_REPLICATED, "Whether or not telefrags should occur with teammates. 0 - No. 1 - Requires 'mp_friendlyfire 1'. 2 - Always." );
+
 LINK_ENTITY_TO_CLASS( obj_teleporter, CObjectTeleporter );
 
 //-----------------------------------------------------------------------------
@@ -1008,7 +1010,9 @@ void CObjectTeleporter::RecieveTeleportingPlayer( CTFPlayer* pTeleportingPlayer 
 				// kill players
 				if ( pEnts[i]->IsPlayer() && ( pEnts[i]->GetTeamNumber() >= FIRST_GAME_TEAM ) )
 				{
-					if ( !pTeleportingPlayer->InSameTeam( pEnts[i] ) && ( pTeleportingPlayer->GetTeamNumber() >= FIRST_GAME_TEAM ) )
+					if ( ( TFGameRules()->CheckFriendlyFire( !pTeleportingPlayer->InSameTeam( pEnts[i] ), &tf_teleporter_telefrag_teammates )
+						|| tf_teleporter_telefrag_teammates.GetInt() == 2 )
+						&& (pTeleportingPlayer->GetTeamNumber() >= FIRST_GAME_TEAM) )
 					{
 						hPlayersToKill.AddToTail( pEnts[i] );
 					}
