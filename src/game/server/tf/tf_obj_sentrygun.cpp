@@ -143,6 +143,10 @@ ConVar tf_sentrygun_max_absorbed_damage_while_controlled_for_achievement( "tf_se
 ConVar tf_sentrygun_kill_after_redeploy_time_achievement( "tf_sentrygun_kill_after_redeploy_time_achievement", "10", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 extern ConVar tf_cheapobjects;
 
+ConVar tf_sentrygun_target_teammates( "tf_sentrygun_target_teammates", "0", FCVAR_REPLICATED, "Whether or not sentries should consider teammates as targets. 0 - No, 1 - Requires mp_friendlyfire, 2 - Always" );
+ConVar tf_sentrygun_target_builder( "tf_sentrygun_target_builder", "0", FCVAR_REPLICATED, "Whether or not sentries should consider their builder as a target. 0 - No, 1 - Requires mp_friendlyfire, 2 - Always" );
+ConVar tf_sentrygun_target_spies_disguised_as_enemy( "tf_sentrygun_target_spies_disguised_as_enemy", "0", FCVAR_REPLICATED, "Whether or not sentries should consider friendly spies disguised as the enemy as a target. 0 - No, 1 - Requires mp_friendlyfire, 2 - Always" );
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -811,6 +815,11 @@ bool CObjectSentrygun::FindTarget()
 	if ( !pTeam )
 		return false;
 
+	// for friendly fire
+	CTFTeam *pTeamOurs = TFTeamMgr()->GetTeam( GetTeamNumber() );
+	if ( !pTeamOurs )
+		return false;
+
 	// If we have an enemy get his minimum distance to check against.
 	Vector vecSegment;
 	Vector vecTargetCenter;
@@ -931,10 +940,11 @@ bool CObjectSentrygun::FindTarget()
 	{
 		// Sentries will try to target players first, then objects.  However, if the enemy held was an object it will continue
 		// to try and attack it first.
-		int nTeamCount = pTeam->GetNumPlayers();
-		for ( int iPlayer = 0; iPlayer < nTeamCount; ++iPlayer )
+		CUtlVector<CTFPlayer*> playerVector;
+		CollectPlayers<CTFPlayer>( &playerVector, TEAM_ANY, true, true );
+		for ( int iPlayer = 0; iPlayer < playerVector.Size(); ++iPlayer )
 		{
-			CTFPlayer *pTargetPlayer = static_cast<CTFPlayer*>( pTeam->GetPlayer( iPlayer ) );
+			CTFPlayer *pTargetPlayer = playerVector[iPlayer];
 			if ( pTargetPlayer == NULL )
 				continue;
 
@@ -1075,6 +1085,20 @@ bool CObjectSentrygun::ValidTargetPlayer( CTFPlayer *pPlayer, const Vector &vecS
 		if ( pKnife && pKnife->GetKnifeType() == KNIFE_DISGUISE_ONKILL )
 			return false;
 	}
+
+	// Explicitly target friendly spies when disguised as enemy if friendly fire/specific targeting is on
+	if ( ( ( friendlyfire.GetBool() && tf_sentrygun_target_spies_disguised_as_enemy.GetBool() ) || tf_sentrygun_target_spies_disguised_as_enemy.GetInt() == 2 )
+		&& pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) && pPlayer->GetTeamNumber() == GetTeamNumber()
+		&& pPlayer->m_Shared.GetDisguiseTeam() != GetTeamNumber() )
+		return true;
+
+	// Don't shoot our builder if friendly fire/specific targeting isn't on
+	if ( pPlayer == GetBuilder() && !( ( friendlyfire.GetBool() && tf_sentrygun_target_builder.GetBool() ) || tf_sentrygun_target_builder.GetInt() == 2 ) )
+		return false;
+
+	// Don't shoot friendlies unless friendly fire is on
+	if ( pPlayer->GetTeamNumber() == GetTeamNumber() && !( friendlyfire.GetBool() && tf_sentrygun_target_teammates.GetBool() ) && tf_sentrygun_target_teammates.GetInt() != 2 )
+		return false;
 
 	// Not across water boundary.
 	if ( ( GetWaterLevel() == 0 && pPlayer->GetWaterLevel() >= 3 ) || ( GetWaterLevel() == 3 && pPlayer->GetWaterLevel() <= 0 ) )

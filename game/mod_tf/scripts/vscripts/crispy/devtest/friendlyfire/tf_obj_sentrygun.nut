@@ -36,3 +36,5 @@
 
 	::ff.sentry <- sentry
 }
+
+// script ff.sentry.SetBuilder(PlayerInstanceFromIndex(1))
