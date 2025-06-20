@@ -138,10 +138,11 @@ BEGIN_DATADESC( CBaseObject )
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetHealth", InputSetHealth ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddHealth", InputAddHealth ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "RemoveHealth", InputRemoveHealth ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "InputRegenerate", InputRegenerate ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetSolidToPlayer", InputSetSolidToPlayer ),
 	DEFINE_INPUTFUNC( FIELD_STRING,  "SetBuilder", InputSetBuilder ),
-	DEFINE_INPUTFUNC( FIELD_VOID,  "Show", InputShow ),
-	DEFINE_INPUTFUNC( FIELD_VOID,  "Hide", InputHide ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "Show", InputShow ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "Hide", InputHide ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "Enable", InputEnable ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "Disable", InputDisable ),
 
@@ -178,15 +179,16 @@ BEGIN_ENT_SCRIPTDESC( CBaseObject, CBaseCombatCharacter, "TF Object" )
 
 	DEFINE_SCRIPTFUNC( SetHealth, "Sets the health of the object." )
 	DEFINE_SCRIPTFUNC( GetHealth, "Gets the health of the object." )
-
-	DEFINE_SCRIPTFUNC_NAMED( ScriptRegenerate, "Regenerate", "Regenerates the object. (Refills ammo on sentires, metal on dispensers, etc.)" )
-
-	DEFINE_SCRIPTFUNC( DetonateObject, "Detonates the object." )
-
 	DEFINE_SCRIPTFUNC( CannotDie, "Can this building die?" )
 	DEFINE_SCRIPTFUNC( SetCannotDie, "Sets if the building can die." )
 
+	DEFINE_SCRIPTFUNC( Regenerate, "Regenerates the object. (Refills ammo on sentires, metal on dispensers, recharge on teleporters, etc.)" )
+
+	DEFINE_SCRIPTFUNC( DetonateObject, "Detonates the object." )
+
 	DEFINE_SCRIPTFUNC( GetSapper, "Gets the current sapper on the object." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptEnable, "Enable", "Enables this building." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptDisable, "Disable", "Disables this building, as if it were sapped." )
 END_SCRIPTDESC();
 
 
@@ -2746,6 +2748,14 @@ void CBaseObject::InputRemoveHealth( inputdata_t &inputdata )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CBaseObject::InputRegenerate( inputdata_t &inputdata )
+{
+	Regenerate();
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : &inputdata - 
 //-----------------------------------------------------------------------------
@@ -3825,6 +3835,14 @@ int	CBaseObject::GetUpgradeAmountPerHit( void )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Sets health back to full
+//-----------------------------------------------------------------------------
+void CBaseObject::Regenerate( void )
+{
+	SetHealth( GetMaxHealthForCurrentLevel() );
+}
+
+//-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
 void CBaseObject::InputEnable( inputdata_t &inputdata )
@@ -3843,6 +3861,33 @@ void CBaseObject::InputEnable( inputdata_t &inputdata )
 // Purpose:
 //-----------------------------------------------------------------------------
 void CBaseObject::InputDisable( inputdata_t &inputdata )
+{
+	if ( !IsDisabled() )
+	{
+		SetDisabled( true );
+		OnGoInactive();
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CBaseObject::ScriptEnable( void )
+{
+	if ( IsDisabled() )
+	{
+		UpdateDisabledState();
+		if ( !IsDisabled() )
+		{
+			OnGoActive();
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CBaseObject::ScriptDisable( void )
 {
 	if ( !IsDisabled() )
 	{

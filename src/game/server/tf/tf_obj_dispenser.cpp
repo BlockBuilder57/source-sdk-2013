@@ -1042,8 +1042,10 @@ void CObjectDispenser::MakeCarriedObject( CTFPlayer *pCarrier )
 //-----------------------------------------------------------------------------
 // Purpose: Refills our metal
 //-----------------------------------------------------------------------------
-void CObjectDispenser::ScriptRegenerate( void )
+void CObjectDispenser::Regenerate( void )
 {
+	BaseClass::Regenerate();
+
 	m_iAmmoMetal = DISPENSER_MAX_METAL_AMMO;
 }
 

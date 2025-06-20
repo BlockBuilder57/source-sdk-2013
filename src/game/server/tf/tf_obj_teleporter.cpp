@@ -72,7 +72,8 @@ BEGIN_ENT_SCRIPTDESC( CObjectTeleporter, CBaseObject, "TF Teleporter" )
 
 	DEFINE_SCRIPTFUNC_NAMED( ScriptSetMatchingTeleporter, "SetMatchingTeleporter", "Sets the matching teleporter for this teleporter." )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetMatchingTeleporter, "GetMatchingTeleporter", "Gets the matching teleporter for this teleporter." )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptTeleporterSend, "TeleporterSend", "Forcibly sends a player through this teleporter." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptTeleporterSend, "TeleporterSend", "Forcibly sends a player through this teleporter's match." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptTeleporterRecieve, "TeleporterRecieve", "Forcibly recieves a player through this teleporter." )
 END_SCRIPTDESC()
 
 PRECACHE_REGISTER( obj_teleporter );
@@ -1464,6 +1465,23 @@ void CObjectTeleporter::FinishUpgrading( void )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Resets recharge time
+//-----------------------------------------------------------------------------
+void CObjectTeleporter::Regenerate( void )
+{
+	BaseClass::Regenerate();
+
+	m_flRechargeTime = gpGlobals->curtime;
+	m_flMyNextThink = gpGlobals->curtime;
+
+	if ( GetMatchingTeleporter() )
+	{
+		GetMatchingTeleporter()->m_flRechargeTime = gpGlobals->curtime;
+		GetMatchingTeleporter()->m_flMyNextThink = gpGlobals->curtime;
+	}
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 bool CObjectTeleporter::InputWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vector hitLoc )
@@ -1546,6 +1564,18 @@ void CObjectTeleporter::ScriptTeleporterSend( HSCRIPT hPlayer )
 		return;
 
 	TeleporterSend( pPlayer );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CObjectTeleporter::ScriptTeleporterRecieve( HSCRIPT hPlayer )
+{
+	CTFPlayer *pPlayer = ScriptToEntClass<CTFPlayer>( hPlayer );
+	if ( !pPlayer )
+		return;
+
+	TeleporterReceive( pPlayer, 0.0f );
 }
 
 void CObjectTeleporter::SpawnBread( const CTFPlayer* pTeleportingPlayer )

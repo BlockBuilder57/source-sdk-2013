@@ -1,4 +1,19 @@
 ::QuotaBots <- [];
+
+::CTFPlayer.SetupQuotaBot <- function(pos, eyeangles, iTeam, iClass)
+{
+	this.SetAbsOrigin(pos)
+	this.SnapEyeAngles(eyeangles)
+	this.ValidateScriptScope()
+
+	if (iTeam > 1)
+		this.ForceSetTeam(iTeam)
+	if (iClass > 0)
+		this.ForceSetClass(iClass)
+
+	this.Regenerate(true)
+}
+
 ::QuotaFakeClients <- function(num)
 {
 	printl("Preparing " + num + " fake clients");
@@ -36,6 +51,7 @@
 	{
 		//printl("spawning bot?");
 		QuotaBots.append(CreateFakeClient("QuotaBot" + QuotaBots.len(), -1, -1));
+
 	}
 
 	return QuotaBots

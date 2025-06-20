@@ -118,7 +118,7 @@ public:
 
 	virtual bool	IsTruceValidForEnt( void ) const OVERRIDE { return true; }
 
-	virtual void	ScriptRegenerate( void ) OVERRIDE;
+	virtual void	Regenerate( void ) OVERRIDE;
 
 private:
 	Vector GetEnemyAimPosition( CBaseEntity* pEnemy ) const;

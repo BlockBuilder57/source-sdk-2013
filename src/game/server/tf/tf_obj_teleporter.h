@@ -82,10 +82,13 @@ public:
 		m_hTeleportingPlayer = pPlayer;
 	}
 
+	virtual void Regenerate( void ) OVERRIDE;
+
 	// VScript functions
 	void ScriptSetMatchingTeleporter( HSCRIPT hTele );
 	HSCRIPT ScriptGetMatchingTeleporter( void );
 	void ScriptTeleporterSend( HSCRIPT hPlayer );
+	void ScriptTeleporterRecieve( HSCRIPT hPlayer );
 
 	// Wrench hits
 	virtual int		Command_Repair( CTFPlayer *pActivator, float flAmount, float flRepairMod, float flRepairToMetalRatio = 3.f, bool bSendEvent = true ) OVERRIDE;

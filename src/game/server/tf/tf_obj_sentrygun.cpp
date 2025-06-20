@@ -2379,8 +2379,10 @@ void CObjectSentrygun::MakeScaledBuilding( CTFPlayer *pPlayer )
 //-----------------------------------------------------------------------------
 // Purpose: Refills our ammo
 //-----------------------------------------------------------------------------
-void CObjectSentrygun::ScriptRegenerate( void )
+void CObjectSentrygun::Regenerate( void )
 {
+	BaseClass::Regenerate();
+
 	m_iAmmoShells = m_iMaxAmmoShells;
 	m_iAmmoRockets = m_iMaxAmmoRockets;
 }

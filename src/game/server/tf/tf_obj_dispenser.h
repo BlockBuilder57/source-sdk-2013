@@ -150,10 +150,9 @@ public:
 	bool CouldHealTarget( CBaseEntity *pTarget );
 	virtual float GetDispenserRadius( void );
 
-
 	Vector GetHealOrigin( void );
 
-	virtual void	ScriptRegenerate( void ) OVERRIDE;
+	virtual void	Regenerate( void ) OVERRIDE;
 
 	CUtlVector< EHANDLE >	m_hHealingTargets;
 

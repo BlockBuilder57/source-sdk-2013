@@ -150,6 +150,7 @@ public:
 
 	void			OnConstructionHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vector hitLoc );
 	virtual float	GetConstructionMultiplier( void );
+	virtual void	Regenerate( void );
 
 	// Destruction
 	virtual void	DetonateObject( void );
@@ -174,6 +175,7 @@ public:
 	void			InputSetHealth( inputdata_t &inputdata );
 	void			InputAddHealth( inputdata_t &inputdata );
 	void			InputRemoveHealth( inputdata_t &inputdata );
+	void			InputRegenerate( inputdata_t &inputdata );
 	void			InputSetSolidToPlayer( inputdata_t &inputdata );
 	void            InputSetBuilder( inputdata_t &inputdata );
 	void			InputShow( inputdata_t &inputdata );
@@ -182,8 +184,9 @@ public:
 	virtual void	InputDisable( inputdata_t &inputdata );
 
 	// VScript functions
+	void			ScriptEnable( void );
+	void			ScriptDisable( void );
 	void			ScriptSetBuilder( HSCRIPT hBuilder );
-	virtual void	ScriptRegenerate( void ) {}
 
 	// Wrench hits
 	virtual bool	InputWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vector hitLoc );

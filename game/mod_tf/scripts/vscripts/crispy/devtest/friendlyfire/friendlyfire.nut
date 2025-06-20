@@ -38,13 +38,7 @@
 	local target = Vector(1269, -275, 16)
 	local eyeangles = QAngle(-3.75, 120, 0)
 
-	QuotaBots[0].SetAbsOrigin(target)
-	QuotaBots[0].SnapEyeAngles(eyeangles)
-	QuotaBots[0].ValidateScriptScope()
-
-	//QuotaBots[0].ForceSetTeam(Constants.ETFTeam.TF_TEAM_RED)
-	QuotaBots[0].ForceSetClass(Constants.ETFClass.TF_CLASS_PYRO)
-	QuotaBots[0].Regenerate(true)
+	QuotaBots[0].SetupQuotaBot(target, eyeangles, -1, Constants.ETFClass.TF_CLASS_PYRO)
 
 	Weaponry.FireRocket(src, target + Vector(0, 0, 64), 0)
 
@@ -71,19 +65,12 @@
 	local target = Vector(1024, -384, 0)
 	local eyeangles = QAngle(0, 90, 0)
 
-	QuotaBots[0].SetAbsOrigin(target)
-	QuotaBots[0].SnapEyeAngles(eyeangles * -1)
-	QuotaBots[0].ValidateScriptScope()
-
-	QuotaBots[0].ForceSetTeam(Constants.ETFTeam.TF_TEAM_RED)
-	QuotaBots[0].ForceSetClass(Constants.ETFClass.TF_CLASS_HEAVYWEAPONS)
-	QuotaBots[0].Regenerate(true)
+	QuotaBots[0].SetupQuotaBot(target, eyeangles, Constants.ETFTeam.TF_TEAM_RED, Constants.ETFClass.TF_CLASS_HEAVYWEAPONS)
 
 	Weaponry.FireHitscan(src, target + Vector(0, 0, 64), Constants.ETFTeam.TF_TEAM_RED)
 }
 
-IncludeScript("crispy/devtest/friendlyfire/tf_obj_teleporter.nut")
-IncludeScript("crispy/devtest/friendlyfire/tf_obj_sentrygun.nut")
+IncludeScript("crispy/devtest/friendlyfire/buildings.nut")
 
 SendToServerConsole("mp_friendlyfire 1");
 printl("Loaded friendly fire testing script");
