@@ -106,6 +106,8 @@ ConVar tf_obj_ground_clearance( "tf_obj_ground_clearance", "32", FCVAR_CHEAT | F
 
 ConVar tf_obj_damage_tank_achievement_amount( "tf_obj_damage_tank_achievement_amount", "2000", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 
+ConVar tf_obj_friendly_fire( "tf_obj_friendly_fire", "0", FCVAR_REPLICATED, "0 - No, 1 - Requires 'mp_friendlyfire 1', 2 - Always" );
+
 extern short g_sModelIndexFireball;
 extern ConVar tf_cheapobjects;
 
@@ -1689,6 +1691,7 @@ void CBaseObject::TraceAttack( const CTakeDamageInfo &inputInfo, const Vector &v
 		if ( InSameTeam(inputInfo.GetAttacker()) )
 		{
 			// Pass Damage to enemy attachments
+			bool bPassed = false;
 			int iNumObjects = GetNumObjectsOnMe();
 			for ( int iPoint=iNumObjects-1;iPoint >= 0; --iPoint )
 			{
@@ -1697,9 +1700,12 @@ void CBaseObject::TraceAttack( const CTakeDamageInfo &inputInfo, const Vector &v
 				if ( pObject && pObject->IsHostileUpgrade() )
 				{
 					pObject->TraceAttack(inputInfo, vecDir, ptr, pAccumulator );
+					bPassed = true;
 				}
 			}
-			return;
+
+			if ( bPassed || !( tf_obj_friendly_fire.GetInt() == 1 && friendlyfire.GetBool() ) && tf_obj_friendly_fire.GetInt() != 2 )
+				return;
 		}
 	}
 
@@ -1925,9 +1931,9 @@ int CBaseObject::OnTakeDamage( const CTakeDamageInfo &info )
 		return 0;
 
 	// Check teams
-	if ( info.GetAttacker() )
+ 	if ( info.GetAttacker() )
 	{
-		if ( InSameTeam(info.GetAttacker()) )
+		if ( InSameTeam(info.GetAttacker()) && !( tf_obj_friendly_fire.GetInt() == 1 && friendlyfire.GetBool() ) && tf_obj_friendly_fire.GetInt() != 2 )
 			return 0;
 
 		if ( TFGameRules() && TFGameRules()->IsTruceActive() )
