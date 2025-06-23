@@ -107,6 +107,7 @@ ConVar tf_obj_ground_clearance( "tf_obj_ground_clearance", "32", FCVAR_CHEAT | F
 ConVar tf_obj_damage_tank_achievement_amount( "tf_obj_damage_tank_achievement_amount", "2000", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 
 ConVar tf_obj_friendly_fire( "tf_obj_friendly_fire", "0", FCVAR_REPLICATED, "0 - No, 1 - Requires 'mp_friendlyfire 1', 2 - Always" );
+ConVar tf_sapper_friendly_fire( "tf_sapper_friendly_fire", "0", FCVAR_REPLICATED, "Whether or not sappers can be attached to friendly buildings. 0 - No, 1 - Requires 'mp_friendlyfire 1', 2 - Always" );
 
 extern short g_sModelIndexFireball;
 extern ConVar tf_cheapobjects;
@@ -1248,6 +1249,9 @@ bool CBaseObject::FindSnapToBuildPos( CBaseObject *pObjectOverride )
 	bool bHostileAttachment = IsHostileUpgrade();
 	int iMyTeam = GetTeamNumber();
 
+	bool bObjFF = TFGameRules()->CheckFriendlyFire( false, &tf_obj_friendly_fire ) || tf_obj_friendly_fire.GetInt() == 2;
+	bool bSapperFF = TFGameRules()->CheckFriendlyFire( false, &tf_sapper_friendly_fire ) || tf_sapper_friendly_fire.GetInt() == 2;
+	
 	if ( !pObjectOverride )
 	{
 		int nTeamCount = TFTeamMgr()->GetTeamCount();
@@ -1258,13 +1262,15 @@ bool CBaseObject::FindSnapToBuildPos( CBaseObject *pObjectOverride )
 			{
 				if ( iTeam == iMyTeam )
 				{
-					continue;
+					if ( !( bObjFF && bSapperFF ) )
+						continue;
 				}
 			}
 			// Friendly attachments look for friendly objects only
 			else if ( iTeam != iMyTeam )
 			{
-				continue;
+				if ( !( bObjFF && bSapperFF ) )
+					continue;
 			}
 
 			CTFTeam *pTeam = ( CTFTeam * )GetGlobalTeam( iTeam );
@@ -1704,7 +1710,7 @@ void CBaseObject::TraceAttack( const CTakeDamageInfo &inputInfo, const Vector &v
 				}
 			}
 
-			if ( bPassed || !( tf_obj_friendly_fire.GetInt() == 1 && friendlyfire.GetBool() ) && tf_obj_friendly_fire.GetInt() != 2 )
+			if ( bPassed || !TFGameRules()->CheckFriendlyFire( false, &tf_obj_friendly_fire ) && tf_obj_friendly_fire.GetInt() != 2 )
 				return;
 		}
 	}
@@ -1933,8 +1939,14 @@ int CBaseObject::OnTakeDamage( const CTakeDamageInfo &info )
 	// Check teams
  	if ( info.GetAttacker() )
 	{
-		if ( InSameTeam(info.GetAttacker()) && !( tf_obj_friendly_fire.GetInt() == 1 && friendlyfire.GetBool() ) && tf_obj_friendly_fire.GetInt() != 2 )
+		if ( InSameTeam( info.GetAttacker() ) && !TFGameRules()->CheckFriendlyFire( false, &tf_obj_friendly_fire ) && tf_obj_friendly_fire.GetInt() != 2 )
+		{
+			// Destroy our attached sapper if friendly fire gets turned off
+			if ( info.GetAttacker() == GetSapper() )
+				GetSapper()->DetonateObject();
+
 			return 0;
+		}
 
 		if ( TFGameRules() && TFGameRules()->IsTruceActive() )
 		{
