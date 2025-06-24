@@ -29,6 +29,8 @@ void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
 #include "tf_obj_sentrygun.h"
 #endif
 
+ConVar tf_laser_pointer_target_teammates( "tf_laser_pointer_target_teammates", "0", FCVAR_REPLICATED, "Whether or not The Wrangler is allowed to target teammates." );
+
 #define TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC	50.0
 #define TF_WEAPON_SNIPERRIFLE_UNCHARGE_PER_SEC	75.0
 #define	TF_WEAPON_SNIPERRIFLE_DAMAGE_MIN		50
@@ -299,8 +301,17 @@ void CTFLaserPointer::UpdateLaserDot( void )
 	Vector vecEndPos = vecMuzzlePos + ( forward * MAX_TRACE_LENGTH );
 
 	trace_t	trace;
-	CTraceFilterIgnoreTeammatesAndTeamObjects filter( pPlayer, COLLISION_GROUP_NONE, pPlayer->GetTeamNumber() );
-	UTIL_TraceLine( vecMuzzlePos, vecEndPos, MASK_SOLID, &filter, &trace );
+
+	if ( tf_laser_pointer_target_teammates.GetBool() )
+	{
+		CTraceFilterSimple filter( pPlayer, COLLISION_GROUP_NONE );
+		UTIL_TraceLine( vecMuzzlePos, vecEndPos, MASK_SOLID, &filter, &trace );
+	}
+	else
+	{
+		CTraceFilterIgnoreTeammatesAndTeamObjects filter( pPlayer, COLLISION_GROUP_NONE, pPlayer->GetTeamNumber() );
+		UTIL_TraceLine( vecMuzzlePos, vecEndPos, MASK_SOLID, &filter, &trace );
+	}
 
 	if ( m_hLaserDot )
 	{
